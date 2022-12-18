@@ -1,0 +1,16 @@
+.TransformBlock-Container {
+    display: flex;
+    outline: solid;
+    outline-width: 3px;
+    outline-color: red;
+}
+.TransformControl{
+    outline: solid;
+    outline-width: 3px;
+    outline-color: purple;
+}
+.TransformCanvas{
+    outline: solid;
+    outline-width: 3px;
+    outline-color: blue;
+}
