@@ -10,9 +10,9 @@ import { Text } from "@nextui-org/react";
 */
 const OneTransform = (props) => {
     return (
-        <>
-            <Text h6>{props.transformtype}</Text>
-        </>
+        <div className={props.className}>
+            <Text h6>{props.transformType}</Text>
+        </div>
     )
 }
 

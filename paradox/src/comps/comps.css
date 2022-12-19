@@ -1,16 +1,42 @@
 .TransformBlock-Container {
+    position: absolute;
     display: flex;
     outline: solid;
-    outline-width: 3px;
+    outline-width: 1px;
+    outline-color: black;
+    background-color: ivory;
+}
+.TransformControl-Container{
+    overflow: visible;
+    outline: solid;
+    outline-width: 5px;
     outline-color: red;
+    background-color: pink;
 }
-.TransformControl{
+.TransformCanvas-Container{
     outline: solid;
-    outline-width: 3px;
-    outline-color: purple;
-}
-.TransformCanvas{
-    outline: solid;
-    outline-width: 3px;
+    outline-width: 5px;
     outline-color: blue;
+    background-color:aquamarine;
 }
+
+.t_x-control {
+    outline: solid;
+    outline-width: 1px;
+    outline-color: black;
+    background-color: gray;
+}
+.t_y-control {
+    outline: solid;
+    outline-width: 1px;
+    outline-color: black;
+    background-color: gray;
+}
+.t_z-control {
+    outline: solid;
+    outline-width: 1px;
+    outline-color: black;
+    background-color: gray;
+}
+
+

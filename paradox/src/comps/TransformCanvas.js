@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import constant from "../config/constant"
+import './comps.css'
 // constant == block outline that does not change
 // draw X == only draw X curve
 // drawALL == draw all curve
@@ -151,9 +152,9 @@ const TransformCanvas = (props) => {
 
     return (
         // UI wrapper around canvas
-        <div className='transformCanvas-container'>
+        <>
             <canvas ref={canvasRef} width={props.width} height={props.height} />
-        </div>
+        </>
     );
     };
 

@@ -5,57 +5,55 @@ import TransformControl from './TransformControl'
 import constant from "../config/constant"
 import TransformCanvasTheme from '../themes/TransformCanvasTheme'
 import TransformControlTheme from '../themes/TransformControlTheme'
+import Container from "./Container.js"
 /*
  dim is horizontal, vertical stretch
  scale is unit scale
 */
 const TransformBlock = (props) => {
-    const [active, setActive] = useState({});
+    const [active, setActive] = useState({test: 'yes'});
     const [transforms, setTransforms] = useState({});
     const [toTweak, setToTweak] = useState({})
     // for now use dim from constant for test
-    const [containerDim, setContainerDim] = useState(
-        constant.TransformContainer.containerDim
-        )
     const [scale, setScale] = useState({})
+
+    // drag logic
+    const [dragging, setDragging] = useState(false)
+    const [style, setStyle] = useState({top: 0, left: 0})
+    const [starts, setStarts] = useState({})
     const containerRef = useRef(null);
-    const mouseRef = useRef({});
 
     ////////////////////////////////////////////////////////////
-    // when dim changes
+    // drag 
     ////////////////////////////////////////////////////////////
-    useEffect(()=>{
-    //TODO: for each transform, add points
-        containerRef.current.style.width = `${containerDim.width}`
-        containerRef.current.style.height = `${containerDim.height}`
-
-    }, [containerDim])
 
     const handleMouseDown = (e) => {
-        mouseRef.current = {
-          x: e.clientX,
-          y: e.clientY,
-        };
-        containerRef.current.addEventListener("mousemove", handleMouseMove);
-        containerRef.current.addEventListener("mouseup", handleMouseUp);
+        setDragging(true);
+        setStarts({
+            x: e.clientX, 
+            y: e.clientY
+        })
       }
     
     const handleMouseMove = (e) => {
-        const newWidth = containerDim.width + e.clientX - mouseRef.current.x;
-        const newHeight = containerDim.height + e.clientY - mouseRef.current.y;
-        mouseRef.current = {
-        x: e.clientX,
-        y: e.clientY,
-        };
-        setContainerDim({
-        width: newWidth,
-        height: newHeight,
-        });
+        if (!dragging || props.fixed) return
+
+        const dx = e.clientX - starts.x
+        const dy = e.clientY - starts.y
+       
+        setStyle({
+            top: style.top + dy,
+            left: style.left + dx
+        })
+       
+        setStarts({
+            x: e.clientX,
+            y: e.clientY
+        })
     }
 
     const handleMouseUp = () => {
-        containerRef.current.removeEventListener("mousemove", handleMouseMove);
-        containerRef.current.removeEventListener("mouseup", handleMouseUp);
+        setDragging(false)
     }
     ////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////
@@ -84,29 +82,39 @@ const TransformBlock = (props) => {
         const transformType = res.transformType
         // TODO: switch cases, find the right shit, and add func + points
     }
-     
+    
+    // replace the div with a container too, eventually ~
     return (
-    <div ref={containerRef} onMouseDown={handleMouseDown} className="TransformBlock-Container">
-        <TransformControl
-            active={active} 
-            transforms={transforms}
-            transformDim={containerDim}
-            scale={scale}
-            addTransform={handleAddTransform}
-            addFunc={handleAddFunc}
-            className="TransformControl"
-            style={{color: TransformCanvasTheme.colors}}
-        />
-        <TransformCanvas 
-            active={active} 
-            transforms={transforms} 
-            transformDim={containerDim}
-            scale={scale}
-            setTweak={handleSetTweak}
-            onTweak={handleOnTweak}
-            className="TransformCanvas"
-            style={{color: TransformControlTheme.colors}}
-        />
+    <div 
+        style={style}
+        onMouseDown={handleMouseDown} 
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        className="TransformBlock-Container"
+    >
+        <Container dim={constant.TransformControl.containerDim} className="TransformControl-Container">
+            <TransformControl
+                active={active} 
+                transforms={transforms}
+                scale={scale}
+                addTransform={handleAddTransform}
+                addFunc={handleAddFunc}
+                className="TransformControl"
+                style={{color: TransformCanvasTheme.colors}}
+            />
+        </Container>
+        <Container dim={constant.TransformCanvas.containerDim} className="TransformCanvas-Container">
+            <TransformCanvas 
+                active={active} 
+                transforms={transforms} 
+                scale={scale}
+                setTweak={handleSetTweak}
+                onTweak={handleOnTweak}
+                className="TransformCanvas"
+                style={{color: TransformControlTheme.colors}}
+            />
+        </Container>
+       
     </div>
     );
     };
