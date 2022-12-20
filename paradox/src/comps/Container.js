@@ -3,6 +3,7 @@ import "./comps.css"
 
 const Container = (props) => {
     // Create a ref for the div element
+    /*
     const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
     const [style, setStyle] = useState({
          width: props.dim.width,
@@ -81,11 +82,7 @@ const Container = (props) => {
 
     return (
         <div
-            ref={divRef}
             className={props.className}
-            onMouseMove={handleMouseMove}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
         >
             {props.children}
         </div>

@@ -5,7 +5,8 @@ import TransformControl from './TransformControl'
 import constant from "../config/constant"
 import TransformCanvasTheme from '../themes/TransformCanvasTheme'
 import TransformControlTheme from '../themes/TransformControlTheme'
-import Container from "./Container.js"
+import Container from "./Container"
+import Maker from "./maker/Maker"
 /*
  dim is horizontal, vertical stretch
  scale is unit scale
@@ -92,29 +93,25 @@ const TransformBlock = (props) => {
         onMouseUp={handleMouseUp}
         className="TransformBlock-Container"
     >
-        <Container dim={constant.TransformControl.containerDim} className="TransformControl-Container">
-            <TransformControl
-                active={active} 
-                transforms={transforms}
-                scale={scale}
-                addTransform={handleAddTransform}
-                addFunc={handleAddFunc}
-                className="TransformControl"
-                style={{color: TransformCanvasTheme.colors}}
-            />
-        </Container>
-        <Container dim={constant.TransformCanvas.containerDim} className="TransformCanvas-Container">
-            <TransformCanvas 
-                active={active} 
-                transforms={transforms} 
-                scale={scale}
-                setTweak={handleSetTweak}
-                onTweak={handleOnTweak}
-                className="TransformCanvas"
-                style={{color: TransformControlTheme.colors}}
-            />
-        </Container>
-       
+        <Maker/>
+        <TransformControl
+            active={active} 
+            transforms={transforms}
+            scale={scale}
+            addTransform={handleAddTransform}
+            addFunc={handleAddFunc}
+            className="TransformControl"
+            style={{color: TransformCanvasTheme.colors}}
+        />
+        <TransformCanvas 
+            active={active} 
+            transforms={transforms} 
+            scale={scale}
+            setTweak={handleSetTweak}
+            onTweak={handleOnTweak}
+            className="TransformCanvas"
+            style={{color: TransformControlTheme.colors}}
+        />
     </div>
     );
     };

@@ -5,6 +5,8 @@
     outline-width: 1px;
     outline-color: black;
     background-color: ivory;
+    width: 500px;
+    height: 150px;
 }
 .TransformControl-Container{
     overflow: visible;
@@ -12,12 +14,16 @@
     outline-width: 5px;
     outline-color: red;
     background-color: pink;
+    width: 20%;
+    height: 100%
 }
 .TransformCanvas-Container{
     outline: solid;
     outline-width: 5px;
     outline-color: blue;
     background-color:aquamarine;
+    width: 80%;
+    height: 100%
 }
 
 .t_x-control {
@@ -40,3 +46,79 @@
 }
 
 
+.Maker-Container {
+    z-index: 9999;
+    width: 120%;
+    height:175%;
+    position: absolute;
+    display: flex;
+  
+}
+
+.MakerControl-Container {
+   width: 20%;
+   height: 100%;
+ 
+}
+
+.MakerCanvas-Container {
+    width: 80%;
+    height: 100%;
+   
+}
+
+
+.MakerControlFunc-Container{
+    width: 100%;
+    height: 100%;
+}
+
+.input {
+    width: 100%;
+}
+
+.file {
+    display: none;
+}
+
+.red {
+    outline: solid;
+    outline-width: 5px;
+    outline-color: red;
+    background-color: pink; 
+}
+
+.blue {
+    outline: solid;
+    outline-width: 5px;
+    outline-color: blue;
+    background-color:aquamarine;
+}
+
+.purple {
+    outline: solid;
+    outline-width: 0px;
+    outline-color: purple;
+    background-color: rgb(255, 192, 250); 
+}
+
+.green {
+    outline: solid;
+    outline-width: 0px;
+    outline-color: green;
+    background-color: rgb(148, 219, 148); 
+}
+
+.yellow {
+    outline: solid;
+    outline-width: 0px;
+    outline-color: yellow;
+    background-color: rgb(255, 255, 182); 
+}
+
+.orange {
+    outline: solid;
+    outline-width: 5px;
+    outline-color: orange;
+    background-color: rgb(247, 203, 122); 
+}

@@ -35,7 +35,9 @@ const TransformControl = (props) => {
     }
     
     return (
-        <>
+        <Container  className="TransformControl-Container">
+            <div className="test">
+            </div>
             <Dropdown>
                 <Dropdown.Button flat color="secondary" css={{ tt: "capitalize" }}>
                    Add Transform 
@@ -56,7 +58,6 @@ const TransformControl = (props) => {
             </Dropdown>
             <div className="transforms-listed">
                 {transforms.map((transform) => {
-                    console.log(transform)
                     return (
                         <OneTransform 
                             key={transform} 
@@ -67,7 +68,7 @@ const TransformControl = (props) => {
                     )
                 })}
             </div>
-        </>
+        </Container>
     )
 }
 
