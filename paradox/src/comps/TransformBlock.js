@@ -18,7 +18,6 @@ const TransformBlock = (props) => {
     // for now use dim from constant for test
     const [scale, setScale] = useState({})
 
-    // drag logic
     const [dragging, setDragging] = useState(false)
     const [style, setStyle] = useState({top: 0, left: 0})
     const [starts, setStarts] = useState({})
