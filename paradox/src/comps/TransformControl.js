@@ -25,13 +25,17 @@ const TransformControl = (props) => {
         // create new transform
         if (transforms.includes(change)) return
         setTransforms([... transforms, change])
-        props.addTransform(change)
+        props.addTransformType(change)
     }
 
-    // add func to TransformBlock
+    // open maker
+    const handleOpenMaker = () => {
+        props.openMaker()
+    }
 
-    const handleAddFunc = (res) => {
-        props.addFunc(res)
+    // add transform
+    const handleSetActiveTransform = (transform_type) => {
+        props.setActiveTransform(transform_type)
     }
     
     return (
@@ -62,7 +66,8 @@ const TransformControl = (props) => {
                         <OneTransform 
                             key={transform} 
                             transformType={transform}
-                            addFunc={handleAddFunc}
+                            openMaker={handleOpenMaker}
+                            setActiveTransform={handleSetActiveTransform}
                             className={constant.TransformClassName[transform]}
                         />
                     )

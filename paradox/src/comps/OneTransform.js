@@ -10,20 +10,11 @@ import { Text } from "@nextui-org/react";
         
 */
 const OneTransform = (props) => {
-
-    const [show, setShow] = useState(false)
     const oneTransformRef = useRef(null)
-
-    const handleDoubleClick = () => {
-        setShow(true)
-    }
-
-    useEffect(() => {
-        
-    }, [show])
 
     useEffect(() => {
         // Add a mouse dblclick event listener to the canvas
+        oneTransformRef.current.style.cursor = 'pointer'
         oneTransformRef.current.addEventListener('dblclick', handleDoubleClick);
 
             // Remove the event listener when the component is unmounted
@@ -32,8 +23,18 @@ const OneTransform = (props) => {
             };
     }, []);
 
+    // open Maker
+    const handleDoubleClick = () => {
+        props.openMaker()
+    }
+
+    // display transform
+    const handleClick = () => {
+        props.setActiveTransform(props.transformType)
+    }
+
     return (
-        <div ref={oneTransformRef} className={props.className}>
+        <div ref={oneTransformRef} className={props.className} onClick={handleClick}>
             <Text h6>{props.transformType}</Text>
         </div>
     )

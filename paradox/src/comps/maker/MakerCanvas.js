@@ -14,26 +14,55 @@ const MakerCanvas = (props) => {
     const [d, setD] = useState({x: 0, y:0})
     const [mousePos, setMousePos] = useState({})
     const [edit, setEdit] = useState(false)
-    const [offset, setOffset] = useState({x:0, y:0})
     const [axis, setAxis] = useState(null)
     const canvasRef = useRef(null)
     const containerRef = useRef(null)
 
-    // user adds data 
-
+    // return added points to grpah when don
     useEffect((()=> {
-        console.log('makercanvas, GOT DATA!')
-        console.log(props.data)
-        var newPoints = []
-        props.data.map(d => {
-            const t = d.t
-            const y = d.y
-            for (let i=0; i<t.length; i++){
-               newPoints.push(new Point(t[i],y[i])) 
-            }
+        if (!props.workingGraph) return 
+        const t = []
+        const y = []
+        points.map(p => {
+            t.push(p.x)
+            y.push(p.y)
         })
-        setPoints([...points, ...newPoints])
-    }), [props.data])
+        props.returnGraph({t:t, y:y})
+    }), [props.workingGraph])
+
+    // set Edit to true whe isMakingNewGraph 
+    // new graph, load blank canvas
+    useEffect((()=>{
+        // whenever exit || enter graph maker, refresh canvas
+        if (props.isMakingGraph) setPoints([])
+        setEdit(props.isMakingGraph)
+    }), [props.isMakingGraph])
+
+    // graphToShow changes
+    // when viewing and not making graph
+    useEffect((()=>{
+        if (!props.graphToShow) return
+        const t = props.graphToShow.t
+        const y = props.graphToShow.y
+        const newPoints = []
+        for (let i=0; i<t.length; i++) {
+            newPoints.push(new Point(t[i], y[i]))
+        }
+        setPoints([...newPoints])
+    }), [props.graphToShow])
+
+    // dataToShow changes
+    // when adding data during isMakingNewGraph
+    useEffect((()=>{
+        if (!props.dataToShow) return
+        const t = props.dataToShow.t
+        const y = props.dataToShow.y
+        const newPoints = []
+        for (let i=0; i<t.length; i++) {
+            newPoints.push(new Point(t[i], y[i]))
+        }
+        setPoints([...points,...newPoints])
+    }),[props.dataToShow])
 
     useEffect((() => {
         const canvas = canvasRef.current;
@@ -52,8 +81,9 @@ const MakerCanvas = (props) => {
     
     // points added
     useEffect((() => {
+        if (!ctx || !cDims.width) return 
         draw()
-    }), [points, d, offset])
+    }), [points, d])
 
     class Point {
         constructor(x,y) {
@@ -76,11 +106,36 @@ const MakerCanvas = (props) => {
     // all draws
     //////////////////////////////////////////////////////////// 
 
+    const bcurve = (points, tension) => {
+        const points0 = w2c(points[0].x, points[0].y)
+        ctx.moveTo(points0.cx, points0.cy);
+
+        ctx.beginPath();
+        var t = (tension != null) ? tension : 1;
+        for (var i = 0; i < points.length - 1; i++) {
+            var p0 = (i > 0) ? w2c(points[i - 1].x, points[i-1].y) : w2c(points[0].x, points[0].y);
+            var p1 = w2c(points[i].x, points[i].y);
+            var p2 = w2c(points[i + 1].x, points[i+1].y);
+            var p3 = (i != points.length - 2) ? w2c(points[i+2].x, points[i+2].y) : p2;
+    
+            var cp1x = p1.cx + (p2.cx - p0.cx) / 6 * t;
+            var cp1y = p1.cy + (p2.cy - p0.cy) / 6 * t;
+    
+            var cp2x = p2.cx - (p3.cx - p1.cx) / 6 * t;
+            var cp2y = p2.cy - (p3.cy - p1.cy) / 6 * t;
+    
+            ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.cx, p2.cy);
+        }
+        ctx.stroke();
+    }
+
     const drawCurve = () => {
-        const ps = convertForCurves()
-        if (ps.length <= 0) return
-        console.log(ps.length)
-        curves(ctx, ps)
+        //const ps = convertForCurves()
+        //if (ps.length <= 0) return
+        //console.log(ps.length)
+        //curves(ctx, ps)
+        if (points.length <= 0) return
+        bcurve(points, 1)
     }
 
     const drawPoints = () => {
@@ -98,6 +153,7 @@ const MakerCanvas = (props) => {
 
     const drawAxis = () => {
         ctx.save()
+        ctx.beginPath()
         ctx.strokeStyle = 'black'
         const conv = w2c(axis.x, axis.y)
         ctx.moveTo(0, conv.cy)
@@ -107,7 +163,7 @@ const MakerCanvas = (props) => {
         ctx.moveTo(conv.cx, 0)
         ctx.lineTo(conv.cx, cDims.height)
         ctx.stroke()
-
+        ctx.closePath()
         ctx.restore()
     }
 
@@ -147,7 +203,7 @@ const MakerCanvas = (props) => {
     }
 
     const draw = () => {
-        if (!ctx || !cDims.width) return 
+      
         ctx.clearRect(0, 0, cDims.width, cDims.height);
         drawPoints()
         drawCurve()
@@ -223,7 +279,6 @@ const MakerCanvas = (props) => {
             after = c2w(cx,cy,scale*(1-f))
             s = s * (1-f)
         }
-        console.log('after')
         var dx = before.x-after.x
         var dy = before.y-after.y
         if ((axis.x-dx-dx)*u2px*s > 0) {
@@ -233,18 +288,6 @@ const MakerCanvas = (props) => {
     }
 
     document.addEventListener('keydown', handleKeyDown)
-
-    // bezier curve
-
-    const convertForCurves = () => {
-        const result = []
-        points.map(point => {
-            const conv = w2c(point.x, point.y)
-            result.push(conv.cx)
-            result.push(conv.cy)
-        })
-        return result
-    }  
 
     return (
         <div ref={containerRef} className="MakerCanvas-Container blue">

@@ -12,8 +12,8 @@ import Maker from "./maker/Maker"
  scale is unit scale
 */
 const TransformBlock = (props) => {
-    const [active, setActive] = useState({test: 'yes'});
-    const [transforms, setTransforms] = useState({});
+    const [availableTransforms, setAvailableTransforms] = useState([])
+    const [activeTransform, setActiveTransform] = useState(null);
     const [toTweak, setToTweak] = useState({})
     // for now use dim from constant for test
     const [scale, setScale] = useState({})
@@ -22,7 +22,8 @@ const TransformBlock = (props) => {
     const [dragging, setDragging] = useState(false)
     const [style, setStyle] = useState({top: 0, left: 0})
     const [starts, setStarts] = useState({})
-    const containerRef = useRef(null);
+    const [graphs, setGraphs] = useState([])
+    const [toggleMaker, setToggleMaker] = useState(false)
 
     ////////////////////////////////////////////////////////////
     // drag 
@@ -73,15 +74,31 @@ const TransformBlock = (props) => {
     }
 
     // adds transform to transforms
-    const handleAddTransform = (transformType) => {
+    const handleSetActiveTransform = (active_transform) => {
         // TODO: is this correct? change active in transforms.transformType
-        setTransforms({...transforms[transformType], 'active': true})
+        setActiveTransform(active_transform)
+    }
+  
+    // only add new graphs 
+    const handleMakerExit = (exit_graphs) => {
+        console.log('// TransformBlock handleMakerExit//')
+        console.log(exit_graphs)
+        console.log(graphs)
+        const newGraphs = []
+        exit_graphs.map(g => {
+            if (!graphs.includes(g)) newGraphs.push(g)
+        })
+        console.log(newGraphs)
+        setGraphs([...graphs,...newGraphs])
+        setToggleMaker(!toggleMaker)
     }
 
-    const handleAddFunc = (res) => {
-        const func = res.func
-        const transformType = res.transformType
-        // TODO: switch cases, find the right shit, and add func + points
+    const handleAddTransformType = (transform_t) => {
+        setAvailableTransforms([...availableTransforms, transform_t])
+    }
+
+    const handleOpenMaker = () => {
+        setToggleMaker(!toggleMaker)
     }
     
     // replace the div with a container too, eventually ~
@@ -93,19 +110,26 @@ const TransformBlock = (props) => {
         onMouseUp={handleMouseUp}
         className="TransformBlock-Container"
     >
-        <Maker/>
+        {(()=> {
+            if (toggleMaker) return (
+                <Maker 
+                exit={handleMakerExit}
+                availableTransforms={availableTransforms}
+                graphs={graphs}
+                />
+            )
+        })()}
         <TransformControl
-            active={active} 
-            transforms={transforms}
             scale={scale}
-            addTransform={handleAddTransform}
-            addFunc={handleAddFunc}
+            setActiveTransform={handleSetActiveTransform}
+            addTransformType={handleAddTransformType}
+            openMaker={handleOpenMaker}
             className="TransformControl"
             style={{color: TransformCanvasTheme.colors}}
         />
         <TransformCanvas 
-            active={active} 
-            transforms={transforms} 
+            graphs={graphs}
+            activeTransform={activeTransform} 
             scale={scale}
             setTweak={handleSetTweak}
             onTweak={handleOnTweak}
