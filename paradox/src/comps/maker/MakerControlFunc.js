@@ -3,32 +3,81 @@ import axios from "axios"
 import Graph from "./Graph"
 import "../comps.css"
 
+/*
+ TODO:
+
+ * add duration
+ * add rhythm (remove phase, omega, offset)
+ * add clip
+ * add export
+ * css
+*/
+
+const initWorkingFunc ={
+    fps: undefined,
+    bpm: undefined,
+    amp: undefined,
+    phase: undefined, 
+    omega: undefined,
+    offset: undefined,
+    showBeats: false,
+} 
 
 const MakerControlFunc = (props) => {
-    const [y, setY] = useState(null)
-    const [t, setT] = useState(null)
-    const [graphs, setGraphs] = useState([])
+    const [funcs, setFuncs] = useState([])
+    const [isMakingGraph, setIsMakingGraph] = useState(false)
+    const [initFunc, setInitFunc] = useState(null)
+    const [workingName, setWorkingName] = useState(null)
+    const [workingFunc, setWorkingFunc] = useState(initWorkingFunc)
+
+    // refs
     const fpsRef = useRef(null)
     const bpmRef = useRef(null)
     const ampRef = useRef(null)
     const mp3Ref = useRef(null)
+    const phaseRef = useRef(null)
+    const omegaRef = useRef(null)
+    const offsetRef = useRef(null)
     const audioCtxRef = useRef(null)
-    const exitDivRef = useRef(null)
     const nameRef = useRef(null)
-    const transformRef = useRef(null)
-    const [isMakingGraph, setIsMakingGraph] = useState(false)
-    const [workingName, setWorkingName] = useState(null)
-    const [workingTransform, setWorkingTransform] = useState(null)
 
     useEffect((()=> {
-        exitDivRef.current.style.cursor = 'pointer'
-    }),[])
+        if (!initFunc) return
+        const newFunc = {
+            fps: initFunc.fps,
+            bpm: initFunc.bpm,
+            amp: initFunc.amp,
+            phase: initFunc.phase, 
+            omega: initFunc.omega,
+            beats: initFunc.beats,
+            offset: initFunc.offset,
+            showBeats: false,    
+        }
+        setWorkingFunc(newFunc)
+        setRefs(initFunc)
+        props.changeFunc(newFunc)
+    }), [initFunc])
 
-    useEffect((()=>{
-        //console.log(graphs)
-        //console.log(props.graphs)
-        setGraphs([...props.graphs])
-    }), [props.graphs])
+    const setRefs = (f) => {
+        if (workingName) nameRef.current.value = workingName
+        bpmRef.current.value = f.bpm
+        ampRef.current.value = f.amp
+        omegaRef.current.value = f.omega
+        phaseRef.current.value = f.phase
+        offsetRef.current.value = f.offset
+    }
+
+    useEffect((()=> {
+        props.changeFunc(workingFunc)
+    }), [
+            workingFunc.amp, 
+            workingFunc.bpm,
+            workingFunc.fps,
+            workingFunc.omega,
+            workingFunc.phase,
+            workingFunc.showBeats,
+            workingFunc.offset
+    ])
 
   
     const handleFileInput = (e) => {
@@ -53,12 +102,12 @@ const MakerControlFunc = (props) => {
 
         var data = []
         //console.log(duration*hz, ch1.length)
-        // send 5 seconds
-        for (let i=hz*30; i<hz*40; i++){
+        // send 10 seconds
+        for (let i=0; i<hz*100; i++){
             data.push(ch1[i])
         }
-        //console.log(data.length)
-        sendAudioData(data, hz)
+        console.log(hz)
+        sendAudioData(data, 22050)
     }
 
 
@@ -68,19 +117,9 @@ const MakerControlFunc = (props) => {
             sr: sr
         }).then(resp => {
             console.log(resp)
-            setT(JSON.parse(resp.data.t))
-            setY(JSON.parse(resp.data.y))
+            setInitFunc(JSON.parse(resp.data.fitted))
         })
     }
-
-    const sendTestData = (data) => {
-        axios.post("http://localhost:8000/api/test-data", {
-            testData: data
-        }).then(resp => {
-            console.log(resp)
-            console.log(resp.data.data)
-        })
-    } 
 
     useEffect(() => {
         if (!isMakingGraph) return
@@ -88,22 +127,104 @@ const MakerControlFunc = (props) => {
         mp3Ref.current.addEventListener("input", handleFileInput)
     }, [isMakingGraph])
 
-    const handleFpsChange = (e) => {
-        fpsRef.current.value = e.target.value 
+
+    const handleEditSave = () => {
+
+        const doesExist = (() => {
+            const found = funcs.filter(f=>{
+                return f.name == workingName
+            })
+            return found.length > 0 
+        })()
+
+
+        if (!workingName) {
+            alert('pls add name')
+            return
+        } 
+
+        setIsMakingGraph(false)
+        props.isMakingGraph(false)
+        if (doesExist) {
+            const newFuncs = []
+            funcs.map(f=>{
+                if (f.name != workingName) newFuncs.push(f)
+                else {
+                    const f = workingFunc
+                    console.log(workingFunc)
+                    f.name = workingName
+                    newFuncs.push(f)
+                }
+            })
+            setFuncs(newFuncs)
+            setWorkingFunc(initWorkingFunc)
+        } else {
+            const f = workingFunc
+            f.name = workingName
+            props.addGraph(f)
+            setFuncs([...funcs, f])
+            setWorkingName(null)
+            setWorkingFunc(initWorkingFunc)
+        }
     }
+
+    const handleEditExit = () => {
+        setWorkingName(null)
+        setIsMakingGraph(false)
+        props.isMakingGraph(false)
+    }
+
+    // select func to show, send to canvas
+    const handleSelectFunc = (name) => {
+        const toShow = funcs.filter(f => {
+            return f.name == name
+        })
+        console.log(toShow)
+        //console.log('// makercontrolfunc, handleSelectGraph //')
+        //console.log(graphs)
+        //console.log(toShow)
+        props.graphToShow(toShow[0])
+    }
+
+    
+    const handleFpsChange = (e) => {
+        const fps = e.target.value
+        fpsRef.current.value = fps 
+        setWorkingFunc({...workingFunc, fps:fps})
+    }
+
     const handleBpmChange = (e) => {
-        bpmRef.current.value = e.target.value 
+        const bpm = e.target.value
+        bpmRef.current.value = bpm 
+        setWorkingFunc({...workingFunc, bpm:bpm})
 
     }
     const handleAmpChange = (e) => {
-        ampRef.current.value = e.target.value 
-        sendTestData(e.target.value)
+        console.log('ampChange!')
+        const amp = e.target.value
+        ampRef.current.value = amp 
+        console.log(amp)
+        setWorkingFunc({...workingFunc, amp:amp})
     }
 
-    const handleExit = (e) => {
-        console.log('exit', e)
-        props.exit(e)
+    const handleOmegaChange = (e) => {
+        const omega = e.target.value
+        omegaRef.current.value = omega
+        setWorkingFunc({...workingFunc, omega:omega})
     }
+
+    const handlePhaseChange = (e) => {
+        const phase = e.target.value
+        phaseRef.current.value = phase
+        setWorkingFunc({...workingFunc, phase:phase})
+    }
+
+    const handleOffsetChange = (e) => {
+        const offset = e.target.value
+        offsetRef.current.value = offset
+        setWorkingFunc({...workingFunc, offset:offset})
+    }
+
 
     const handleMakeGraph = (e) => {
         setIsMakingGraph(true)
@@ -115,87 +236,35 @@ const MakerControlFunc = (props) => {
         console.log(nameRef.current.value)
         setWorkingName(nameRef.current.value)
     }
-      // add New Graph
-    useEffect((()=> {
-        if (!y || !t) return
-        const data ={
-            t: t,
-            y: y
-        }
-        props.dataToShow(data)
-    }), [t,y])
 
-
-    const handleAddGraph = () => {
-       
-        if (!workingName) {
-            alert('pls add name')
-            return
-        } else if (!t || !y){
-            alert('pls add data')
-            return
-        } 
-        setT(null)
-        setY(null)
-        setIsMakingGraph(false)
-        props.isMakingGraph(false)
-
-        //TODO: replace this when add support for adding transform type in Maker
-      
-        props.addGraph({
-            name: workingName,
-            transform: null 
-        })
-        setWorkingName(null)
-        setWorkingTransform(null)
+    const handleRestoreDefault = () => {
+        setWorkingFunc(initFunc)
+        setRefs(initFunc)
     }
 
-    const handleAddGraphExit = () => {
-        setT(null)
-        setY(null)
-        setWorkingName(null)
-        setWorkingTransform(null)
-        setIsMakingGraph(false)
-        props.isMakingGraph(false)
+    const handleShowBeats = () => {
+        setWorkingFunc({...workingFunc, showBeats: !workingFunc.showBeats})
     }
-
-    // select graph to show, send to canvas
-    const handleSelectGraph = (name) => {
-        const toShow = graphs.filter(g => {
-            return g.name == name
-        })
-        //console.log('// makercontrolfunc, handleSelectGraph //')
-        //console.log(graphs)
-        //console.log(toShow)
-        props.graphToShow(toShow[0])
+    
+    const handleEdit = (name) => {
+        const toEdit = funcs.filter(f=> {
+            return f.name == name
+        })[0]
+        setIsMakingGraph(true)
+        setInitFunc(toEdit)
+        setWorkingName(name)
     }
-
-    const handleTransformChange = (newG) => {
-        const updated = []
-        graphs.map(g=>{
-            var addG = g
-            if (addG.name == newG.name) addG.transform = newG.transform
-            updated.push(addG)
-        })
-        setGraphs(updated)
-    }
-
    
     return (
         <div className="MakerControlFunc-Container yellow">
             <div style={{justifyText: "center", display: 'flex'}}>
-                <div style={{width: '90%'}}>f(x)</div>
-                <div style={{justifyText: 'right', backgroundColor: "gray"}} 
-                ref={exitDivRef}
-                onClick={handleExit}
-                >X</div>
             </div>
             {(()=>{
-                if (!isMakingGraph && !graphs) {
+                if (!isMakingGraph && !funcs) {
                     return (
                         <div>No graphs</div>
                     )
-                }   else if (!isMakingGraph && graphs) {
+                }   else if (!isMakingGraph && funcs) {
                     return (
                         <>
                             <div>
@@ -205,15 +274,16 @@ const MakerControlFunc = (props) => {
                             </div>
                             <div>
                                 {
-                                    graphs.map(g => {
+                                    funcs.map(f => {
                                         return (
                                             <ul>
                                                 <Graph 
-                                                key={g.name} 
-                                                graph={g} 
-                                                selectGraph={handleSelectGraph}
-                                                changeTransform={handleTransformChange}
-                                                availableTransforms={props.availableTransforms}/>
+                                                key={f.name} 
+                                                func={f} 
+                                                selectFunc={handleSelectFunc}
+                                                availableTransforms={props.availableTransforms}
+                                                edit={handleEdit}
+                                                />
                                             </ul>
                                         )
                                     })
@@ -240,8 +310,44 @@ const MakerControlFunc = (props) => {
                                 onChange={handleFpsChange}></input> 
                             </div>
                             <div className="input-container">
-                                <button className="button" onClick={handleAddGraph}>add graph</button>
-                                <button className="button" onClick={handleAddGraphExit}>exit</button>
+                                <label for="bpm">bpm</label>
+                                <input ref={bpmRef} name="bpm" className="input" type="number" 
+                                onChange={handleBpmChange}
+                                ></input> 
+                            </div>
+                            <div className="input-container">
+                                <label for="amp">amp</label>
+                                <input ref={ampRef} name="amp" className="input" type="number" 
+                                onChange={handleAmpChange}
+                                ></input> 
+                            </div>
+                            <div className="input-container">
+                                <label for="omega">omega</label>
+                                <input ref={omegaRef} name="omega" className="input" type="number" 
+                                onChange={handleOmegaChange}
+                                ></input> 
+                            </div>
+                            <div className="input-container">
+                                <label for="phase">phase</label>
+                                <input ref={phaseRef} name="phase" className="input" type="number" 
+                                onChange={handlePhaseChange}
+                                ></input> 
+                            </div>
+                            <div className="input-container">
+                                <label for="offset">offset</label>
+                                <input ref={offsetRef} name="offset" className="input" type="number" 
+                                onChange={handleOffsetChange}
+                                ></input> 
+                            </div>
+                            <div className="input-container">
+                                <button className="button" onClick={handleShowBeats}>show beats</button>
+                            </div>
+                            <div className="input-container">
+                                <button className="button" onClick={handleRestoreDefault}>restore default</button>
+                            </div>
+                            <div className="input-container">
+                                <button className="button" onClick={handleEditSave}>save</button>
+                                <button className="button" onClick={handleEditExit}>exit</button>
                             </div>
                         </>
                     )

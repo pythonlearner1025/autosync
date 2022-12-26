@@ -2,7 +2,7 @@ import { NextUIProvider } from '@nextui-org/react';
 import { Button } from "@nextui-org/react";
 import './App.css';
 import './comps/comps.css'
-import TransformBlock from "./comps/TransformBlock"
+import Maker from "./comps/maker/Maker"
 import React, { useState, useEffect, useRef } from 'react';
 
 function App() {
@@ -15,10 +15,7 @@ function App() {
 
   return (
     <NextUIProvider>
-      <Button onPress={handleClick}>Fix</Button>
-      <TransformBlock 
-        fixed={fixed}
-        />
+      <Maker/>
     </NextUIProvider>
   );
 }

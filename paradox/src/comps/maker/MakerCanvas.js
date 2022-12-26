@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import curves from "../../funcs/curve"
+import "../comps.css"
+
 
 // scaling & zooming: https://github.com/OneLoneCoder/Javidx9/blob/master/ConsoleGameEngine/SmallerProjects/OneLoneCoder_PanAndZoom.cpp
 const MakerCanvas = (props) => {
+    const [linspace, setLinspace] = useState(0.02)
+    const [funcToShow, setFuncToShow] = useState(null)
     const [range, setRange] = useState(props.range)
     const [cDims, setCDims] = useState({})
     const [f, setF] = useState(0.05)
@@ -15,6 +19,7 @@ const MakerCanvas = (props) => {
     const [mousePos, setMousePos] = useState({})
     const [edit, setEdit] = useState(false)
     const [axis, setAxis] = useState(null)
+    const [maxX, setMaxX] = useState(0)
     const canvasRef = useRef(null)
     const containerRef = useRef(null)
 
@@ -38,42 +43,46 @@ const MakerCanvas = (props) => {
         setEdit(props.isMakingGraph)
     }), [props.isMakingGraph])
 
-    // graphToShow changes
-    // when viewing and not making graph
     useEffect((()=>{
-        if (!props.graphToShow) return
-        const t = props.graphToShow.t
-        const y = props.graphToShow.y
-        const newPoints = []
-        for (let i=0; i<t.length; i++) {
-            newPoints.push(new Point(t[i], y[i]))
-        }
-        setPoints([...newPoints])
-    }), [props.graphToShow])
+        setFuncToShow(props.funcToShow)
+    }), [props.funcToShow])
 
-    // dataToShow changes
-    // when adding data during isMakingNewGraph
     useEffect((()=>{
-        if (!props.dataToShow) return
-        const t = props.dataToShow.t
-        const y = props.dataToShow.y
-        const newPoints = []
-        for (let i=0; i<t.length; i++) {
-            newPoints.push(new Point(t[i], y[i]))
-        }
-        setPoints([...points,...newPoints])
-    }),[props.dataToShow])
+        //console.log(funcToShow.beats)
+        draw()
+    }), [funcToShow])
+
+    const sin = (t) => {
+        return funcToShow.amp *Math.sin(t*funcToShow.omega + funcToShow.phase) + funcToShow.offset
+    }
 
     useEffect((() => {
-        const canvas = canvasRef.current;
+
         const container = containerRef.current;
+        const PIXEL_RATIO = (() => {
+            const ctx = canvasRef.current.getContext('2d')
+            const dpi = window.devicePixelRatio || 1
+            const bsr = ctx.webkitBackingStorePixelRatio ||
+            ctx.mozBackingStorePixelRatio ||
+            ctx.msBackingStorePixelRatio ||
+            ctx.oBackingStorePixelRatio ||
+            ctx.backingStorePixelRatio || 1;
+            return dpi/bsr
+        })()
+
+        const canvas = canvasRef.current
+        canvas.width = container.offsetWidth 
+        canvas.height = container.offsetHeight 
+        canvas.style.width = `${container.offsetWidth }px`
+        canvas.style.height = `${container.offsetHeight }px`
+        canvas.getContext('2d').setTransform(1, 0, 0, 1, 0, 0);
         const ctx = canvas.getContext('2d')
-        canvas.width = container.offsetWidth
-        canvas.height = container.offsetHeight
 
         setCtx(ctx)
         setCDims({width: canvas.width, height: canvas.height})
+        setMaxX(c2w(canvas.width,0).x)
         setAxis(new Axis())
+        console.log(canvas)
 
         // Clear the canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -83,7 +92,7 @@ const MakerCanvas = (props) => {
     useEffect((() => {
         if (!ctx || !cDims.width) return 
         draw()
-    }), [points, d])
+    }), [d])
 
     class Point {
         constructor(x,y) {
@@ -101,6 +110,34 @@ const MakerCanvas = (props) => {
             this.y = 0
         }
     }
+    
+    const drawBeats = () => {
+        if (!funcToShow.showBeats) return
+        funcToShow.beats.map(beat => {
+            const p1 = w2c(beat, 10) 
+            const p2 = w2c(beat, -10)
+            ctx.beginPath()
+            ctx.moveTo(p1.cx, p1.cy)
+            ctx.lineTo(p2.cx, p2.cy)
+            ctx.stroke()
+            ctx.closePath()
+        })
+    }
+
+
+    const pointsInFrame = () => {
+        if (!funcToShow) return []
+        const t1 = c2w(0,0).x
+        const t2 = c2w(cDims.width,0).x
+        const ps2render = []
+        for (let i=t1; i<t2+1; i+=linspace) {
+            if (i >= 0) {
+                const t = i 
+                ps2render.push(new Point(t, sin(t)))
+            }
+        }
+        return ps2render
+    }
 
     //////////////////////////////////////////////////////////// 
     // all draws
@@ -109,8 +146,8 @@ const MakerCanvas = (props) => {
     const bcurve = (points, tension) => {
         const points0 = w2c(points[0].x, points[0].y)
         ctx.moveTo(points0.cx, points0.cy);
-
         ctx.beginPath();
+
         var t = (tension != null) ? tension : 1;
         for (var i = 0; i < points.length - 1; i++) {
             var p0 = (i > 0) ? w2c(points[i - 1].x, points[i-1].y) : w2c(points[0].x, points[0].y);
@@ -126,21 +163,17 @@ const MakerCanvas = (props) => {
     
             ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.cx, p2.cy);
         }
-        ctx.stroke();
+        ctx.stroke()
     }
 
-    const drawCurve = () => {
-        //const ps = convertForCurves()
-        //if (ps.length <= 0) return
-        //console.log(ps.length)
-        //curves(ctx, ps)
-        if (points.length <= 0) return
-        bcurve(points, 1)
+    const drawCurve = (ps2render) => {
+        if (ps2render.length <= 0) return
+        bcurve(ps2render, 1)
     }
 
-    const drawPoints = () => {
+    const drawPoints = (ps2render) => {
         ctx.save()
-        points.map(p => {
+        ps2render.map(p => {
             ctx.beginPath()
             const conv = w2c(p.x, p.y)
             ctx.arc(conv.cx, conv.cy, 1, 0, 2 * Math.PI, false)
@@ -170,16 +203,17 @@ const MakerCanvas = (props) => {
     const drawUnits = () => {
         // left
         var length = 5
-        var mid = cDims.height / 2
+        // dpi
+        var mid = cDims.height / 2 
         ctx.fillStyle = 'black'
-        ctx.font = '8px serif'
+        ctx.font = '10px serif'
         for (let i=0; i<mid; i+=mid/(mid/u2px)) {
             if (i==0) {
                 ctx.moveTo(0,mid)
                 ctx.lineTo(length, mid)
                 ctx.stroke()
                 const conv = c2w(length, mid)
-                ctx.fillText(`${conv.x/u2px},${conv.y/u2px}`,length, mid)
+                //ctx.fillText(`${conv.x/u2px},${conv.y/u2px}`,length, mid)
                 continue
             }
             ctx.moveTo(0,mid-i)
@@ -203,10 +237,13 @@ const MakerCanvas = (props) => {
     }
 
     const draw = () => {
-      
+        if (!ctx) return
         ctx.clearRect(0, 0, cDims.width, cDims.height);
-        drawPoints()
-        drawCurve()
+        const ps2render = pointsInFrame()
+        //addPoints()
+        //drawPoints(ps2render)
+        drawBeats()
+        drawCurve(ps2render)
         drawUnits()
         drawAxis() 
     }
@@ -232,7 +269,7 @@ const MakerCanvas = (props) => {
 
         var setdx = dx/scale/u2px;
         var setdy = dy/scale/u2px;
-        if ((axis.x-d.x+setdx)*u2px*scale > 0) {
+        if ((axis.x-d.x+setdx)*u2px*scale > 5) {
             setdx = 0
         }
         setD({x: d.x - setdx, y:d.y + setdy})
@@ -255,7 +292,7 @@ const MakerCanvas = (props) => {
         return {cx: cx, cy: cy}
     }
 
-    const c2w = (cx,cy, s=scale) => {
+    const c2w = (cx,cy,s=scale) => {
         const h = canvasRef.current.height
         const x = cx / (u2px*s) + d.x
         const y = -(cy - h/2 )/(u2px*s)+d.y
@@ -281,7 +318,7 @@ const MakerCanvas = (props) => {
         }
         var dx = before.x-after.x
         var dy = before.y-after.y
-        if ((axis.x-dx-dx)*u2px*s > 0) {
+        if ((axis.x-dx-dx)*u2px*s > 5) {
             dx=0
         }
         setD({x: d.x + dx, y: d.y + dy})
