@@ -2,10 +2,33 @@ import React, { useState, useEffect, useRef } from 'react';
 import curves from "../../funcs/curve"
 import "../comps.css"
 
+const nullFunc = {
+    amp
+    : 
+    undefined,
+    bpm
+    : 
+    undefined,
+    fps
+    : 
+    undefined,
+    offset
+    : 
+    undefined,
+    omega
+    : 
+    undefined,
+    phase
+    : 
+    undefined,
+    showBeats
+    : 
+    false 
+}
 
 // scaling & zooming: https://github.com/OneLoneCoder/Javidx9/blob/master/ConsoleGameEngine/SmallerProjects/OneLoneCoder_PanAndZoom.cpp
 const MakerCanvas = (props) => {
-    const [linspace, setLinspace] = useState(0.02)
+    const [linspace, setLinspace] = useState(0.001)
     const [funcToShow, setFuncToShow] = useState(null)
     const [range, setRange] = useState(props.range)
     const [cDims, setCDims] = useState({})
@@ -43,18 +66,36 @@ const MakerCanvas = (props) => {
         setEdit(props.isMakingGraph)
     }), [props.isMakingGraph])
 
+    // receive new func to show
     useEffect((()=>{
-        setFuncToShow(props.funcToShow)
+        // init points
+        if (props.funcToShow && !eqfunc(props.funcToShow, nullFunc)) {
+            console.log('loaded', props.funcToShow)
+            const t1 = 0
+            const t2 = c2w(cDims.width,0).x 
+            const newPoints = []
+            for (let i=t1; i<t2+linspace; i+=linspace){
+                newPoints.push(new Point(i, sin(i, props.funcToShow)))
+            }
+            console.log(newPoints.length)
+            setPoints(newPoints)
+        }
+       setFuncToShow(props.funcToShow)
     }), [props.funcToShow])
 
     useEffect((()=>{
-        //console.log(funcToShow.beats)
         draw()
     }), [funcToShow])
 
-    const sin = (t) => {
-        return funcToShow.amp *Math.sin(t*funcToShow.omega + funcToShow.phase) + funcToShow.offset
+    const sin = (t, f=funcToShow) => {
+        return f.amp * (Math.cos(t*f.omega ))**100 
     }
+
+    /*
+    const sin = (t, f=funcToShow) => {
+        return f.amp *Math.sin(t*f.omega + f.phase) + f.offset
+    }
+    */
 
     useEffect((() => {
 
@@ -112,7 +153,7 @@ const MakerCanvas = (props) => {
     }
     
     const drawBeats = () => {
-        if (!funcToShow.showBeats) return
+        if (!funcToShow  || !funcToShow.showBeats) return
         funcToShow.beats.map(beat => {
             const p1 = w2c(beat, 10) 
             const p2 = w2c(beat, -10)
@@ -126,34 +167,71 @@ const MakerCanvas = (props) => {
 
 
     const pointsInFrame = () => {
-        if (!funcToShow) return []
+        
         const t1 = c2w(0,0).x
         const t2 = c2w(cDims.width,0).x
-        const ps2render = []
-        for (let i=t1; i<t2+1; i+=linspace) {
-            if (i >= 0) {
-                const t = i 
-                ps2render.push(new Point(t, sin(t)))
-            }
+        const l1 = Math.floor(t1)
+        const l2 = Math.ceil(t2)
+        const labels2render = []
+        for (let i=l1; i<l2; i++) {
+            labels2render.push(new Point(i, 0))
         }
-        return ps2render
+
+        return {labels: labels2render}
+    }
+
+    const addPoints = (newDx, newScale) => {
+        if (eqfunc(funcToShow, nullFunc)) {
+            return
+        }
+        const newWorldMaxX = cDims.width / (u2px*newScale) + newDx 
+        const t1 = points[points.length-1]
+        const newPoints = []
+        for (let i=t1.x; i<newWorldMaxX; i+=linspace) {
+            newPoints.push(new Point(i, sin(i)))
+        }
+        setPoints([...points, ...newPoints])
+    }
+    // TODO:
+    // smarter memory slashing strategy needed
+    const removePoints = (newDx, newScale) => {
+        if (eqfunc(funcToShow, nullFunc)) {
+            return
+        }
+        const newPoints = [...points]
+        const newWorldMaxX = cDims.width / (u2px*newScale) + newDx
+        const idx = Math.ceil(newWorldMaxX/linspace)
+        const toPop = points.length - idx
+        for (let i=0; i<toPop;i++) {
+            newPoints.pop()
+        }
+        setPoints(newPoints)
     }
 
     //////////////////////////////////////////////////////////// 
     // all draws
     //////////////////////////////////////////////////////////// 
 
-    const bcurve = (points, tension) => {
-        const points0 = w2c(points[0].x, points[0].y)
-        ctx.moveTo(points0.cx, points0.cy);
-        ctx.beginPath();
+    const bcurve = (tension) => {
+        if (points.length == 0) return
+        console.log(points.length)
 
+        const t1 = c2w(0,0).x
+        const t2 = c2w(cDims.width,0).x
+        const i1 = Math.floor(t1/linspace) <= 0 ? 0 : Math.floor(t1/linspace)-1
+        const i2 = Math.ceil(t2/linspace) > points.length-1 ? points.length-1 : Math.ceil(t2/linspace)
+        //console.log(i1,i2, points.length)
+
+        const points0 = w2c(points[i1].x, points[i1].y)
+        ctx.beginPath();
+        ctx.moveTo(points0.cx, points0.cy);
+        //console.log(points0.cx, points0.cy)
         var t = (tension != null) ? tension : 1;
-        for (var i = 0; i < points.length - 1; i++) {
-            var p0 = (i > 0) ? w2c(points[i - 1].x, points[i-1].y) : w2c(points[0].x, points[0].y);
+        for (var i = i1; i < i2; i++) {
+            var p0 = (i > i1) ? w2c(points[i-1].x, points[i-1].y) : w2c(points[i].x, points[i].y);
             var p1 = w2c(points[i].x, points[i].y);
-            var p2 = w2c(points[i + 1].x, points[i+1].y);
-            var p3 = (i != points.length - 2) ? w2c(points[i+2].x, points[i+2].y) : p2;
+            var p2 = w2c(points[i+1].x, points[i+1].y);
+            var p3 = (i <= i2 - 2) ? w2c(points[i+2].x, points[i+2].y) : p2;
     
             var cp1x = p1.cx + (p2.cx - p0.cx) / 6 * t;
             var cp1y = p1.cy + (p2.cy - p0.cy) / 6 * t;
@@ -166,19 +244,22 @@ const MakerCanvas = (props) => {
         ctx.stroke()
     }
 
-    const drawCurve = (ps2render) => {
-        if (ps2render.length <= 0) return
-        bcurve(ps2render, 1)
-    }
 
-    const drawPoints = (ps2render) => {
+    const drawLabels = (labels2render) => {
+        
         ctx.save()
-        ps2render.map(p => {
-            ctx.beginPath()
+        ctx.fillStyle = 'black'
+        const f = scale > 3.0 ? 10 : Math.floor(scale/3.0*10)
+        const b = scale > 3.0 ? 3 : Math.floor(scale/3.0*3)
+        ctx.font = `${f}px serif`
+        labels2render.map(p => {
             const conv = w2c(p.x, p.y)
-            ctx.arc(conv.cx, conv.cy, 1, 0, 2 * Math.PI, false)
-            ctx.fillStyle = 'red'
-            ctx.fill()
+            ctx.fillStyle = 'black'
+            ctx.fillText(`${p.x}`,conv.cx+b, conv.cy-b)
+            ctx.beginPath()
+            ctx.moveTo(conv.cx, conv.cy-b)
+            ctx.lineTo(conv.cx, conv.cy+b)
+            ctx.stroke()
             ctx.closePath()
         })
         ctx.restore()
@@ -239,18 +320,19 @@ const MakerCanvas = (props) => {
     const draw = () => {
         if (!ctx) return
         ctx.clearRect(0, 0, cDims.width, cDims.height);
-        const ps2render = pointsInFrame()
+        const render = pointsInFrame()
         //addPoints()
         //drawPoints(ps2render)
+        bcurve(1)
         drawBeats()
-        drawCurve(ps2render)
-        drawUnits()
+        //drawUnits()
         drawAxis() 
+        drawLabels(render.labels)
     }
 
     const handleOnMouseDown = (e) => {
         console.log('here',edit)
-        if (edit) {
+        if (false) {
             const rect = canvasRef.current.getBoundingClientRect()
             const cx = e.clientX - rect.left
             const cy = e.clientY - rect.top
@@ -272,6 +354,12 @@ const MakerCanvas = (props) => {
         if ((axis.x-d.x+setdx)*u2px*scale > 5) {
             setdx = 0
         }
+        const newdx = d.x-setdx
+        if (newdx > d.x) addPoints(newdx, scale)
+        else removePoints(newdx, scale)
+        // add points before change
+        // remove points
+
         setD({x: d.x - setdx, y:d.y + setdy})
         setMousePos({x: e.clientX, y: e.clientY})
     }
@@ -321,7 +409,20 @@ const MakerCanvas = (props) => {
         if ((axis.x-dx-dx)*u2px*s > 5) {
             dx=0
         }
+        // add points before change
+        const newdx = d.x + dx
+        if (newdx > d.x) addPoints(newdx, s)
+        else removePoints(newdx, s)
+        // remove points after change
+
         setD({x: d.x + dx, y: d.y + dy})
+    }
+
+    // utils
+
+    const eqfunc = (a,b) => {
+        if (a.amp == b.amp && a.bpm == b.bpm && a.fps == b.fps && a.offset == b.offset && a.omega == b.omega && a.phase == b.phase && a.showBeats == b.showBeats) return true
+        else return false
     }
 
     document.addEventListener('keydown', handleKeyDown)
