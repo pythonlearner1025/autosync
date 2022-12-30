@@ -19,11 +19,9 @@ const Graph = (props) => {
 
     return (
         <>
-            <div>
-                <div ref={graphRef} className="Graph" onClick={handleSelectFunc}>{props.func.name}</div>
-                <div>
-                    <button onClick={handleEdit}>edit</button>
-                </div>
+            <div ref={graphRef} className="saved-func" onClick={handleSelectFunc}>
+                <p>{props.func.name}</p>
+                <button className="button med" onClick={handleEdit}>edit</button>
             </div>
         </>
     )

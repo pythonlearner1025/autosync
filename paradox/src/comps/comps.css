@@ -1,32 +1,3 @@
-
-.TransformBlock-Container {
-    position: absolute;
-    display: flex;
-    outline: solid;
-    outline-width: 1px;
-    outline-color: black;
-    background-color: ivory;
-    width: 500px;
-    height: 150px;
-}
-.TransformControl-Container{
-    overflow: visible;
-    outline: solid;
-    outline-width: 5px;
-    outline-color: red;
-    background-color: pink;
-    width: 20%;
-    height: 100%
-}
-.TransformCanvas-Container{
-    outline: solid;
-    outline-width: 5px;
-    outline-color: blue;
-    background-color:aquamarine;
-    width: 80%;
-    height: 100%
-}
-
 .t_x-control {
     outline: solid;
     outline-width: 1px;
@@ -46,43 +17,70 @@
     background-color: gray;
 }
 
-
 .Maker-Container {
+    display: inline-block;
+    position: relative;
     width: 100%;
     height: 100%;
-    display: flex;
     overflow:hidden;
 }
-
-.MakerControl-Container {
-   width: 20%;
-   height: 100%;
-   background-color:rgb(55, 158, 55);
+.MakerControlFunc-Container{
+    border-radius: 5px;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    width: 250px;
+    height: 460px;
 }
 
+.MakerControlFunc-Minimized{
+    border-radius: 5px;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    width: 45px;
+    height: 25px;
+}
+
+
 .MakerCanvas-Container {
-    width: 80%;
+    width: 100%;
     height: 100%;
     background-color:bisque;
 }
 
-
-.MakerControlFunc-Container{
-    width: 100%;
-    height: 100%;
-}
-
 .input-container {
+    display:flex;
     width: 100%;
+    margin-top: 5%;
+    margin-bottom: 5%;
 }
 
-.input {
+.input[type=number] {
     box-sizing: border-box;
-    width: 100%;
-    height: 50%;
+    width: 100px;
+    height: 20px;
+    margin-left: 10px;
 }
 
-.button {
+.input[type=text] {
+    box-sizing: border-box;
+    width: 100px;
+    height: 20px; 
+    margin-left: 10px;
+}
+
+.input[type='file'] {
+    background-color: #5e5c5c;
+    color: white;
+    width: 100px;
+    overflow: hidden;
+    margin-left: 10px;
+}
+
+.select {
+    color: white;
+    margin-left: 10px;
 }
 
 .file {
@@ -117,11 +115,32 @@
     background-color: rgb(148, 219, 148); 
 }
 
-.yellow {
+.tool-header {
+    position: relative;
+    display: flex;
+}
+
+.background {
     outline: solid;
-    outline-width: 0px;
-    outline-color: rgb(90, 73, 243);
-    background-color: rgb(90, 73, 243); 
+    background-color: #242424; 
+}
+
+.header-font {
+    color:rgb(240, 255, 250)
+}
+
+.control-font {
+    color: rgba(187, 187, 187, 0.87)
+}
+
+.min {
+    position: absolute;
+    top: 0;
+    right: 0
+}
+
+.label {
+    margin-left: 3px;
 }
 
 .orange {
@@ -129,4 +148,69 @@
     outline-width: 5px;
     outline-color: orange;
     background-color: rgb(247, 203, 122); 
+}
+
+.max {
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: rotate(180deg)
+}
+
+
+
+.button {
+    color: white;
+    margin-left: 5px;
+    /*border: 2px solid #f3f3f3; /* Green */
+}
+
+.low {
+    border: 1px solid #4e4e5cc0;
+    border-radius: 5px;
+    background-color: #5e5b6dd8;
+}
+
+.med {
+    border: 1px solid #4e4e5cc0;
+    border-radius: 5px;
+    background-color: #4e4e5cc0; 
+}
+
+.high {
+    border: 1px solid #2949fc;
+    border-radius: 5px;
+    background-color: #2949fc
+}
+
+.saved-func {
+    width: 100%;
+    height: 20px;
+    color: white;
+    text-align: center;
+    justify-content: center;
+}
+
+.choose-file {
+
+}
+
+.show-beats {
+
+}
+
+.restore-default {
+
+}
+
+.save {
+
+}
+
+.exit {
+
+}
+
+.makenew {
+    margin-top: 10px;
 }

@@ -87,8 +87,18 @@ const MakerCanvas = (props) => {
         draw()
     }), [funcToShow])
 
+
+
     const sin = (t, f=funcToShow) => {
-        return f.amp * (Math.cos(t*f.omega ))**100 
+        switch (f.funcType) {
+            case ('saw'): {
+                return f.amp * (Math.cos((t-f.offset)*f.omega))**100 
+            }
+            case ('sin'): {
+                return f.amp * Math.sin((t-f.offset)*f.omega)
+            }
+        }
+        return f.amp * Math.sin((t-f.offset)*f.omega)
     }
 
     /*
@@ -100,17 +110,6 @@ const MakerCanvas = (props) => {
     useEffect((() => {
 
         const container = containerRef.current;
-        const PIXEL_RATIO = (() => {
-            const ctx = canvasRef.current.getContext('2d')
-            const dpi = window.devicePixelRatio || 1
-            const bsr = ctx.webkitBackingStorePixelRatio ||
-            ctx.mozBackingStorePixelRatio ||
-            ctx.msBackingStorePixelRatio ||
-            ctx.oBackingStorePixelRatio ||
-            ctx.backingStorePixelRatio || 1;
-            return dpi/bsr
-        })()
-
         const canvas = canvasRef.current
         canvas.width = container.offsetWidth 
         canvas.height = container.offsetHeight 
@@ -170,14 +169,20 @@ const MakerCanvas = (props) => {
         
         const t1 = c2w(0,0).x
         const t2 = c2w(cDims.width,0).x
-        const l1 = Math.floor(t1)
-        const l2 = Math.ceil(t2)
-        const labels2render = []
-        for (let i=l1; i<l2; i++) {
-            labels2render.push(new Point(i, 0))
+        const y1 = c2w(0,0).y
+        const y2 = c2w(0, cDims.height).y
+
+        const xpoints = []
+        for (let i=Math.floor(t1); i<Math.ceil(t2); i++) {
+            xpoints.push(new Point(i, 0))
+        }
+       
+        const ypoints = []
+        for (let i=Math.floor(y2); i<Math.ceil(y1); i++){
+            ypoints.push(new Point(0, i))
         }
 
-        return {labels: labels2render}
+        return {xlabels: xpoints, ylabels: ypoints}
     }
 
     const addPoints = (newDx, newScale) => {
@@ -214,7 +219,6 @@ const MakerCanvas = (props) => {
 
     const bcurve = (tension) => {
         if (points.length == 0) return
-        console.log(points.length)
 
         const t1 = c2w(0,0).x
         const t2 = c2w(cDims.width,0).x
@@ -247,12 +251,14 @@ const MakerCanvas = (props) => {
 
     const drawLabels = (labels2render) => {
         
+        const xlabels = labels2render.xlabels
+        const ylabels = labels2render.ylabels
         ctx.save()
         ctx.fillStyle = 'black'
         const f = scale > 3.0 ? 10 : Math.floor(scale/3.0*10)
         const b = scale > 3.0 ? 3 : Math.floor(scale/3.0*3)
         ctx.font = `${f}px serif`
-        labels2render.map(p => {
+        xlabels.map(p => {
             const conv = w2c(p.x, p.y)
             ctx.fillStyle = 'black'
             ctx.fillText(`${p.x}`,conv.cx+b, conv.cy-b)
@@ -261,6 +267,18 @@ const MakerCanvas = (props) => {
             ctx.lineTo(conv.cx, conv.cy+b)
             ctx.stroke()
             ctx.closePath()
+        })
+        ylabels.map(p => {
+            const conv = w2c(p.x, p.y)
+            ctx.fillStyle = 'black'
+            if (p.y != 0) {
+                ctx.fillText(`${p.y}`, conv.cx+b+2, conv.cy+b)
+                ctx.beginPath()
+                ctx.moveTo(conv.cx-b, conv.cy)
+                ctx.lineTo(conv.cx+b, conv.cy)
+                ctx.stroke()
+                ctx.closePath()
+            } 
         })
         ctx.restore()
     }
@@ -327,7 +345,7 @@ const MakerCanvas = (props) => {
         drawBeats()
         //drawUnits()
         drawAxis() 
-        drawLabels(render.labels)
+        drawLabels(render)
     }
 
     const handleOnMouseDown = (e) => {
@@ -352,11 +370,11 @@ const MakerCanvas = (props) => {
         var setdx = dx/scale/u2px;
         var setdy = dy/scale/u2px;
         if ((axis.x-d.x+setdx)*u2px*scale > 5) {
-            setdx = 0
+            //setdx = 0
         }
         const newdx = d.x-setdx
         if (newdx > d.x) addPoints(newdx, scale)
-        else removePoints(newdx, scale)
+        //else removePoints(newdx, scale)
         // add points before change
         // remove points
 
@@ -407,12 +425,12 @@ const MakerCanvas = (props) => {
         var dx = before.x-after.x
         var dy = before.y-after.y
         if ((axis.x-dx-dx)*u2px*s > 5) {
-            dx=0
+            //dx=0
         }
         // add points before change
         const newdx = d.x + dx
         if (newdx > d.x) addPoints(newdx, s)
-        else removePoints(newdx, s)
+        //else removePoints(newdx, s)
         // remove points after change
 
         setD({x: d.x + dx, y: d.y + dy})

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import MakerControl from "./MakerControl"
+import MakerControlFunc from "./MakerControlFunc"
 import MakerCanvas from "./MakerCanvas"
 
 const testTransforms = [
@@ -8,6 +8,8 @@ const testTransforms = [
 
 // left canvas, right control
 const Maker = (props) => {
+    
+
     const [windowDims, setWindowDims] = useState({w: null, h: null})
     const [availableTransforms, setAvailableTransforms] = useState(testTransforms)
     const [funcToShow, setFuncToShow] = useState(null)
@@ -83,7 +85,8 @@ const Maker = (props) => {
     }
 
     return (
-        <div className="Maker-Container purple" style={{
+        <>
+        <div className="Maker-Container" style={{
             width: windowDims.w == null ? window.innerWidth : windowDims.w, 
             height: windowDims.h == null ? window.innerHeight : windowDims.h
             }}>
@@ -95,16 +98,17 @@ const Maker = (props) => {
             isMakingGraph={isMakingGraph}
             workingGraph={workingGraph}
             />
-            <MakerControl 
-            addGraph={handleAddGraph}
+            <MakerControlFunc exit={handleExit} 
             graphToShow={handleGraphToShow}
-            exit={handleExit}
-            isMakingGraph={handleIsMakingGraph} 
-            graphs={graphs}
-            availableTransforms={availableTransforms}
+            addGraph={handleAddGraph}
+            isMakingGraph={handleIsMakingGraph}
+            graphs={props.graphs}
+            availableTransforms={props.availableTransforms}
             changeFunc={handleChangeFunc}
-            />
+             />
         </div>
+        </>
+        
     )
 }
 
