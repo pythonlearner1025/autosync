@@ -1,30 +1,51 @@
 import React, { useState, useEffect, useRef } from 'react';
-import MakerControl from "./MakerControl"
+import MakerControlFunc from "./MakerControlFunc"
 import MakerCanvas from "./MakerCanvas"
+
+const testTransforms = [
+    't_x', 't_y', 't_z'
+]
 
 // left canvas, right control
 const Maker = (props) => {
-    const [data, setData] = useState([])
-    const [dataToShow, setDataToShow] = useState(null)
+    
+
+    const [windowDims, setWindowDims] = useState({w: null, h: null})
+    const [availableTransforms, setAvailableTransforms] = useState(testTransforms)
+    const [funcToShow, setFuncToShow] = useState(null)
     const [graphToShow, setGraphToShow] = useState(null)
     const [graphs, setGraphs] = useState([])
     const [addGraph, setAddGraph] = useState(false)
     const [isMakingGraph, setIsMakingGraph] = useState(false)
     const [workingGraph, setWorkingGraph] = useState(null)
 
-    // load TransformBlock graphs
-    useEffect((()=>{
-        console.log('mount Maker')
-        console.log(graphs)
-        console.log(props.graphs)
-        setGraphs([...graphs, ...props.graphs])
-    }),[])
+    const debounce = (func, wait, immediate) => {
+        var timeout;
+        return () => {
+            const context = null, args = null;
+            const later = function() {
+                timeout = null;
+                if (!immediate) func.apply(context, args);
+            };
+            const callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow) func.apply(context, args);
+        };
+    };
 
-    const handleAddData = (d) => {
-        //console.log('maker, got data')
-        //console.log(d)
-        setData([...data, d])
+    const windowResize = () => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        console.log(w, h)
+        setWindowDims({
+            w: w,
+            h: h
+        })
     }
+        
+    window.addEventListener('resize', debounce(windowResize, 500, false))
+
 
     const handleExit = (d) => {
         //console.log('// Maker handleExit //')
@@ -33,71 +54,61 @@ const Maker = (props) => {
         props.exit(graphs)
     }
 
-    const handleDataToShow = (d) => {
-        //console.log('// Maker handleExit //')
-        //console.log(d)
-        // send over only Data
-        setDataToShow(d)
-    }
-
     const handleGraphToShow = (g) => {
         //console.log('// Maker handleGraphToShow//')
-        const graph2show = graphs.filter(graph => {
-            return graph.name == g.name
-        })
-        //console.log(graph2show[0])
-        setGraphToShow(graph2show[0])
+        console.log(g)
+        setFuncToShow(g)
     }
 
-    const handleAddGraph = (graphInfo) => {
-        setWorkingGraph(graphInfo)
+    const handleAddGraph = (newg) => {
+        setGraphs([...graphs, newg])
     }
 
     // when Add graph triggered,
     // make New Graph
     const handleReturnGraph = (data) => {
-
-        console.log('handleReturnGraph')
-        console.log(data)
         const graph = {
             name: workingGraph.name,
             t: data.t,
             y: data.y,
             transform: workingGraph.transform
         }
-        console.log(graph)
-        console.log(graphs)
         setGraphs([...graphs, graph])
     }
 
     const handleIsMakingGraph = (bool) => {
-        console.log('ismakinggraph', bool)
         setIsMakingGraph(bool)
     }
 
+    const handleChangeFunc = (func) => {
+        setFuncToShow(func)
+    }
 
     return (
-        <div className="Maker-Container purple">
+        <>
+        <div className="Maker-Container" style={{
+            width: windowDims.w == null ? window.innerWidth : windowDims.w, 
+            height: windowDims.h == null ? window.innerHeight : windowDims.h
+            }}>
             <MakerCanvas 
-            data={data}
-            dataToShow={dataToShow}
+            funcToShow={funcToShow}
             graphToShow={graphToShow}
             addGraph={addGraph}            
             returnGraph={handleReturnGraph}
             isMakingGraph={isMakingGraph}
             workingGraph={workingGraph}
             />
-            <MakerControl 
-            addData={handleAddData}
-            addGraph={handleAddGraph}
-            dataToShow={handleDataToShow}
+            <MakerControlFunc exit={handleExit} 
             graphToShow={handleGraphToShow}
-            exit={handleExit}
-            isMakingGraph={handleIsMakingGraph} 
-            graphs={graphs}
+            addGraph={handleAddGraph}
+            isMakingGraph={handleIsMakingGraph}
+            graphs={props.graphs}
             availableTransforms={props.availableTransforms}
-            />
+            changeFunc={handleChangeFunc}
+             />
         </div>
+        </>
+        
     )
 }
 
