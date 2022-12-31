@@ -16,12 +16,17 @@ const Graph = (props) => {
         props.edit(props.func.name)
     }
 
+    const handleExport = () => {
+        props.export(props.func.name)
+    }
+
 
     return (
         <>
             <div ref={graphRef} className="saved-func" onClick={handleSelectFunc}>
-                <p>{props.func.name}</p>
-                <button className="button med" onClick={handleEdit}>edit</button>
+                <p style={{left: 5, bottom: 0, position: 'absolute', overflow: 'hidden', maxWidth: 90}}>{props.func.name}</p>
+                <button style={{marginLeft: 100}}className="button-func med" onClick={handleEdit}>edit</button>
+                <button className="button-func med" onClick={handleExport}>export</button>
             </div>
         </>
     )

@@ -28,7 +28,7 @@ const nullFunc = {
 
 // scaling & zooming: https://github.com/OneLoneCoder/Javidx9/blob/master/ConsoleGameEngine/SmallerProjects/OneLoneCoder_PanAndZoom.cpp
 const MakerCanvas = (props) => {
-    const [linspace, setLinspace] = useState(0.001)
+    const [linspace, setLinspace] = useState(0.003)
     const [funcToShow, setFuncToShow] = useState(null)
     const [range, setRange] = useState(props.range)
     const [cDims, setCDims] = useState({})
@@ -46,17 +46,6 @@ const MakerCanvas = (props) => {
     const canvasRef = useRef(null)
     const containerRef = useRef(null)
 
-    // return added points to grpah when don
-    useEffect((()=> {
-        if (!props.workingGraph) return 
-        const t = []
-        const y = []
-        points.map(p => {
-            t.push(p.x)
-            y.push(p.y)
-        })
-        props.returnGraph({t:t, y:y})
-    }), [props.workingGraph])
 
     // set Edit to true whe isMakingNewGraph 
     // new graph, load blank canvas
@@ -80,13 +69,19 @@ const MakerCanvas = (props) => {
             console.log(newPoints.length)
             setPoints(newPoints)
         }
+       setMaxX(c2w(cDims.width,0).x)
        setFuncToShow(props.funcToShow)
     }), [props.funcToShow])
 
     useEffect((()=>{
         draw()
     }), [funcToShow])
-
+    
+    // points added
+    useEffect((() => {
+        if (!ctx || !cDims.width) return 
+        draw()
+    }), [d.x, d.y])
 
 
     const sin = (t, f=funcToShow) => {
@@ -127,12 +122,7 @@ const MakerCanvas = (props) => {
         // Clear the canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }), [])
-    
-    // points added
-    useEffect((() => {
-        if (!ctx || !cDims.width) return 
-        draw()
-    }), [d])
+
 
     class Point {
         constructor(x,y) {
@@ -192,9 +182,10 @@ const MakerCanvas = (props) => {
         const newWorldMaxX = cDims.width / (u2px*newScale) + newDx 
         const t1 = points[points.length-1]
         const newPoints = []
-        for (let i=t1.x; i<newWorldMaxX; i+=linspace) {
+        for (let i=t1.x+linspace; i<newWorldMaxX+linspace; i+=linspace) {
             newPoints.push(new Point(i, sin(i)))
         }
+        console.log('added p',newPoints.length)
         setPoints([...points, ...newPoints])
     }
     // TODO:
@@ -219,12 +210,13 @@ const MakerCanvas = (props) => {
 
     const bcurve = (tension) => {
         if (points.length == 0) return
+        console.log(points.length)
 
         const t1 = c2w(0,0).x
         const t2 = c2w(cDims.width,0).x
         const i1 = Math.floor(t1/linspace) <= 0 ? 0 : Math.floor(t1/linspace)-1
-        const i2 = Math.ceil(t2/linspace) > points.length-1 ? points.length-1 : Math.ceil(t2/linspace)
-        //console.log(i1,i2, points.length)
+        const i2 = Math.ceil(t2/linspace)+1 > points.length-1 ? points.length-1 : Math.ceil(t2/linspace)+1
+        console.log('comp',i2-i1)
 
         const points0 = w2c(points[i1].x, points[i1].y)
         ctx.beginPath();
@@ -299,42 +291,6 @@ const MakerCanvas = (props) => {
         ctx.restore()
     }
 
-    const drawUnits = () => {
-        // left
-        var length = 5
-        // dpi
-        var mid = cDims.height / 2 
-        ctx.fillStyle = 'black'
-        ctx.font = '10px serif'
-        for (let i=0; i<mid; i+=mid/(mid/u2px)) {
-            if (i==0) {
-                ctx.moveTo(0,mid)
-                ctx.lineTo(length, mid)
-                ctx.stroke()
-                const conv = c2w(length, mid)
-                //ctx.fillText(`${conv.x/u2px},${conv.y/u2px}`,length, mid)
-                continue
-            }
-            ctx.moveTo(0,mid-i)
-            ctx.lineTo(length,mid-i)
-            ctx.stroke()
-            
-            if (i+(mid / (mid/u2px)) < mid) {
-                ctx.moveTo(0,mid+i)
-                ctx.lineTo(length,mid+i)
-                ctx.stroke()
-            } 
-        }
-
-        // bottom
-        for (let i=0; i<cDims.width; i+=cDims.width / (cDims.width/u2px)) {
-            if (i==0) continue
-            ctx.moveTo(i,cDims.height)
-            ctx.lineTo(i,cDims.height-length)
-            ctx.stroke()
-        }
-    }
-
     const draw = () => {
         if (!ctx) return
         ctx.clearRect(0, 0, cDims.width, cDims.height);
@@ -349,15 +305,6 @@ const MakerCanvas = (props) => {
     }
 
     const handleOnMouseDown = (e) => {
-        console.log('here',edit)
-        if (false) {
-            const rect = canvasRef.current.getBoundingClientRect()
-            const cx = e.clientX - rect.left
-            const cy = e.clientY - rect.top
-            const conv = c2w(cx,cy)
-            const p = new Point(conv.x, conv.y)
-            setPoints([...points, p])
-        } 
        setDragging(true)
        setMousePos({x: e.clientX, y: e.clientY})
     }
@@ -369,11 +316,18 @@ const MakerCanvas = (props) => {
 
         var setdx = dx/scale/u2px;
         var setdy = dy/scale/u2px;
+        /*
         if ((axis.x-d.x+setdx)*u2px*scale > 5) {
             //setdx = 0
-        }
+        }*/
         const newdx = d.x-setdx
-        if (newdx > d.x) addPoints(newdx, scale)
+        if (newdx > d.x) {
+            const newMaxX = cDims.width / (u2px*scale) + newdx
+            if (newMaxX > maxX) {
+                addPoints(newdx, scale)
+                setMaxX(newMaxX)
+            }
+        }
         //else removePoints(newdx, scale)
         // add points before change
         // remove points
@@ -424,12 +378,21 @@ const MakerCanvas = (props) => {
         }
         var dx = before.x-after.x
         var dy = before.y-after.y
+        /*
         if ((axis.x-dx-dx)*u2px*s > 5) {
             //dx=0
         }
+        */
         // add points before change
         const newdx = d.x + dx
-        if (newdx > d.x) addPoints(newdx, s)
+        console.log('wheel')
+        if (newdx < d.x) {
+            const newMaxX = cDims.width / (u2px*s) + newdx
+            if (newMaxX >= maxX) {
+                addPoints(newdx, s)
+                setMaxX(newMaxX)
+            }
+        }
         //else removePoints(newdx, s)
         // remove points after change
 

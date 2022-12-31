@@ -3,6 +3,7 @@ import axios from "axios"
 import Graph from "./Graph"
 import "../comps.css"
 import min from "../../assets/download.svg"
+import parser from "../../funcs/parser"
 
 /*
  TODO:
@@ -28,11 +29,16 @@ const MakerControlFunc = (props) => {
     const [funcs, setFuncs] = useState([])
     const [isMakingGraph, setIsMakingGraph] = useState(false)
     const [initFunc, setInitFunc] = useState(null)
-    const [workingName, setWorkingName] = useState(null)
     const [workingFunc, setWorkingFunc] = useState(initWorkingFunc)
+    // export stuff
+    const [isExportMode, setIsExportMode] = useState(false)
+    const [exportFps, setExportFps] = useState(null)
+    const [exportDuration, setExportDuration] = useState(null)
+    const [exportFunc, setExportFunc] = useState(null)
 
     // refs
     const fpsRef = useRef(null)
+    const durationRef = useRef(null)
     const bpmRef = useRef(null)
     const ampRef = useRef(null)
     const mp3Ref = useRef(null)
@@ -41,6 +47,8 @@ const MakerControlFunc = (props) => {
     const offsetRef = useRef(null)
     const audioCtxRef = useRef(null)
     const nameRef = useRef(null)
+    const exportRef = useRef(null)
+    // export stuff
     
     // visuals
     const [minimize, setMinimize] = useState(false)
@@ -76,6 +84,7 @@ const MakerControlFunc = (props) => {
     useEffect((()=> {
         if (!initFunc) return
         const newFunc = {
+            name: initFunc.name,
             fps: initFunc.fps,
             bpm: initFunc.bpm,
             amp: initFunc.amp,
@@ -85,14 +94,15 @@ const MakerControlFunc = (props) => {
             offset: initFunc.offset,
             showBeats: false,    
         }
+        console.log(newFunc)
         setWorkingFunc(newFunc)
         setRefs(initFunc)
         props.changeFunc(newFunc)
     }), [initFunc])
 
     const setRefs = (f) => {
-        if (workingName)  nameRef.current.value = workingName
         console.log(bpmRef, ampRef, omegaRef, funcTypeRef, offsetRef)
+        nameRef.current.value = f.name
         bpmRef.current.value = f.bpm
         ampRef.current.value = f.amp
         omegaRef.current.value = f.omega
@@ -149,8 +159,10 @@ const MakerControlFunc = (props) => {
             audioData: ch1,
             sr: sr
         }).then(resp => {
-            console.log(resp)
-            setInitFunc(JSON.parse(resp.data.fitted))
+            const data = JSON.parse(resp.data.fitted)
+            data.name = nameRef.current.value
+            console.log(data)
+            setInitFunc(data)
         })
     }
 
@@ -165,8 +177,8 @@ const MakerControlFunc = (props) => {
     const handleEditSave = () => {
         console.log('// save //')
         console.log(funcs)
-        console.log(workingName)
         console.log(workingFunc)
+        const workingName = workingFunc.name
 
         const doesExist = (() => {
             const found = funcs.filter(f=>{
@@ -175,8 +187,7 @@ const MakerControlFunc = (props) => {
             return found.length > 0 
         })()
 
-
-        if (!workingName) {
+        if (workingFunc.name == undefined) {
             alert('pls add name')
             return
         } 
@@ -188,28 +199,21 @@ const MakerControlFunc = (props) => {
             funcs.map(f=>{
                 if (f.name != workingName) newFuncs.push(f)
                 else {
-                    const f = workingFunc
-                    console.log(workingFunc)
-                    f.name = workingName
-                    newFuncs.push(f)
+                    newFuncs.push(workingFunc)
                 }
             })
             setFuncs(newFuncs)
-            setWorkingName(null)
             setWorkingFunc(initWorkingFunc)
         } else {
-            const f = workingFunc
-            f.name = workingName
-            props.addGraph(f)
-            setFuncs([...funcs, f])
-            setWorkingName(null)
+            props.addGraph(workingFunc)
+            setFuncs([...funcs, workingFunc])
             setWorkingFunc(initWorkingFunc)
         }
     }
 
     const handleEditExit = () => {
-        setWorkingName(null)
         setIsMakingGraph(false)
+        setWorkingFunc(initWorkingFunc)
         props.isMakingGraph(false)
     }
 
@@ -225,19 +229,8 @@ const MakerControlFunc = (props) => {
         props.graphToShow(toShow[0])
     }
 
-    
-    const handleFpsChange = (e) => {
-        const fps = e.target.value
-        fpsRef.current.value = fps 
-        setWorkingFunc({...workingFunc, fps:fps})
-    }
+   
 
-    const handleBpmChange = (e) => {
-        const bpm = e.target.value
-        bpmRef.current.value = bpm 
-        setWorkingFunc({...workingFunc, bpm:bpm})
-
-    }
     const handleAmpChange = (e) => {
         console.log('ampChange!')
         const amp = e.target.value
@@ -254,7 +247,6 @@ const MakerControlFunc = (props) => {
 
     const handleFuncTypeChange = (e) => {
         const funcType = e.target.value
-        console.log(funcType)
         funcTypeRef.current.value = funcType
         setWorkingFunc({...workingFunc, funcType:funcType})
     }
@@ -265,16 +257,18 @@ const MakerControlFunc = (props) => {
         setWorkingFunc({...workingFunc, offset:offset})
     }
 
+    const handleNameChange = (e) => {
+        const name = e.target.value
+        nameRef.current.value = name
+        setWorkingFunc({...workingFunc, name: name})
+    }
 
     const handleMakeGraph = (e) => {
         setIsMakingGraph(true)
         props.isMakingGraph(true)
     }
 
-    const handleNameSubmit = (e) => {
-        e.preventDefault() 
-        setWorkingName(nameRef.current.value)
-    }
+    
 
     const handleRestoreDefault = () => {
         setWorkingFunc(initFunc)
@@ -290,14 +284,56 @@ const MakerControlFunc = (props) => {
             return f.name == name
         })[0]
         setIsMakingGraph(true)
+        console.log(toEdit)
         setInitFunc(toEdit)
-        setWorkingName(name)
     }
 
     const handleMinMax = () => {
         setMinimize(!minimize)
     }
 
+    // export stuff
+    useEffect((()=> {
+        if (!isExportMode){
+            console.log('nah')
+            return
+        } 
+        console.log('here')
+        fpsRef.current.value = exportFps
+        durationRef.current.value = exportDuration
+        exportRef.current.value = parser(exportFps, exportDuration, exportFunc)
+    }), [exportFps, exportDuration])
+
+    const handleExport = (name) => {
+        const func = funcs.filter(f=>{return f.name == name})[0]
+        setExportFunc(func)
+        setIsExportMode(true)
+        setExportFps(24) 
+        setExportDuration(100)
+    }
+
+    const handleExportExit = () => {
+        setIsExportMode(false)
+        setExportFps(null)
+        setExportDuration(null)
+    }
+
+    const handleExportAreaClick = (e) => {
+        e.target.select()
+        document.execCommand('copy')
+    }
+ 
+    const handleFpsChange = (e) => {
+        const fps = e.target.value
+        fpsRef.current.value = fps 
+        setExportFps(fps)
+    }
+
+    const handleDurationChange = (e) => {
+        const s = e.target.value
+        durationRef.current.value = s 
+        setExportDuration(s)
+    }
     if (minimize) {
         return (
             <div 
@@ -334,7 +370,7 @@ const MakerControlFunc = (props) => {
                             return (
                                 <div>No graphs</div>
                             )
-                        }   else if (!isMakingGraph && funcs) {
+                        }   else if (!isMakingGraph && funcs && !isExportMode) {
                             return (
                                 <>
                                     <div className='tool-header header-font med'>
@@ -355,13 +391,14 @@ const MakerControlFunc = (props) => {
                                         {   
                                             funcs.map((f,i) => {
                                                 return (
-                                                    <ul style={{paddingTop: i==0?0:30}}>
+                                                    <ul >
                                                         <Graph 
                                                         key={i} 
                                                         func={f} 
                                                         selectFunc={handleSelectFunc}
                                                         availableTransforms={props.availableTransforms}
                                                         edit={handleEdit}
+                                                        export={handleExport}
                                                         />
                                                     </ul>
                                                 )
@@ -369,6 +406,38 @@ const MakerControlFunc = (props) => {
                                         }
                                     </div>
                                 </>
+                            )
+                        } else if (!isMakingGraph && isExportMode){
+                            return (
+                                <> 
+                                <div className='tool-header header-font med'>
+                                    <p style={{paddingRight: 90, paddingLeft: 5}}>Export</p>
+                                    <img 
+                                    style={{paddingTop: 5, paddingRight: 5}}
+                                    className='min' 
+                                    src={min} 
+                                    width='15px' 
+                                    height='15px'
+                                    onClick={handleMinMax}
+                                    />
+                                </div>
+                                <div className="inputs">
+                                    <div className="input-container control-font">
+                                        <label className="label">fps:</label>
+                                        <input ref={fpsRef} name="name" className="input" onChange={handleFpsChange} type="number"></input> 
+                                    </div>
+                                    <div className="input-container control-font">
+                                        <label className="label">duration(s):</label>
+                                        <input ref={durationRef} name="name" className="input" onChange={handleDurationChange} type="number"></input> 
+                                    </div>
+                                    <div className="input-container">
+                                        <textarea ref={exportRef} className="export-area" onClick={handleExportAreaClick}></textarea>
+                                    </div>
+                                    <div className="input-container">
+                                        <button className="button high" onClick={handleExportExit}>exit</button>
+                                    </div>
+                                </div>
+                       </> 
                             )
                         } else {
                             return (
@@ -388,9 +457,7 @@ const MakerControlFunc = (props) => {
                                     <div className="inputs">
                                         <div className="input-container control-font">
                                             <label className="label">name</label>
-                                            <form onSubmit={handleNameSubmit}>
-                                                <input ref={nameRef} name="name" className="input" type="text"></input> 
-                                            </form>
+                                            <input ref={nameRef} name="name" className="input" onChange={handleNameChange} type="text"></input> 
                                         </div>
                                         <div className="input-container control-font">
                                             <label className="label">mp3</label>

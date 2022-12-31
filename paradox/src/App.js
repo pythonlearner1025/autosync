@@ -1,5 +1,4 @@
 import { NextUIProvider } from '@nextui-org/react';
-import { Button } from "@nextui-org/react";
 import './App.css';
 import './comps/comps.css'
 import Maker from "./comps/maker/Maker"
