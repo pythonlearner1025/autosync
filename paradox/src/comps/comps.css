@@ -18,11 +18,11 @@
 }
 
 .Maker-Container {
-    display: inline-block;
+    display: relative;
     position: relative;
     width: 100%;
     height: 100%;
-    overflow:hidden;
+    overflow: hidden;
 }
 .MakerControlFunc-Container{
     border-radius: 5px;
@@ -47,6 +47,7 @@
     width: 100%;
     height: 100%;
     background-color:bisque;
+    
 }
 
 .input-container {
@@ -94,25 +95,22 @@
     background-color: pink; 
 }
 
-.blue {
-    outline: solid;
-    outline-width: 5px;
-    outline-color: blue;
-    background-color:rgb(240, 255, 250);
+.canvas {
+    background-color: #1D1D1D;
 }
 
 .purple {
     outline: solid;
     outline-width: 0px;
-    outline-color: purple;
-    background-color: rgb(255, 192, 250); 
+    outline-color: #555555;
+    background-color: rgb(155, 155, 155); 
 }
 
 .green {
     outline: solid;
     outline-width: 0px;
-    outline-color: green;
-    background-color: rgb(148, 219, 148); 
+    outline-color: rgb(22, 255, 100);
+    background-color: rgb(46, 196, 255); 
 }
 
 .tool-header {
@@ -216,4 +214,31 @@
     margin-left: 5%;
     width: 90%;
     height: 280px;
+}
+
+.info-min{
+    z-index: 9999;
+    border-radius: 5px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+.info-max{
+    z-index: 9999;
+    border-radius: 5px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    background-color: #242424 
+}
+
+.info-text{
+    margin-left: 5px;
+    color: white;
+}
+
+.link {
+    margin-left: 5px;
+    margin-right: 5px;
 }
