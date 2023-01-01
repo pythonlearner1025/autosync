@@ -1,5 +1,4 @@
 const parser = (fps, s, func) => {
-    console.log(func)
     if (func.amp==undefined || func.offset==undefined || func.omega==undefined) return '0:(0)'
     const saw = (t) => {
         return func.amp * (Math.cos((t-func.offset)*func.omega))**100

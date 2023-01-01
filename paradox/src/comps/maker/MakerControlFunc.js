@@ -55,7 +55,6 @@ const MakerControlFunc = (props) => {
     const [position, setPosition] = useState({x:0, y:0})
 
     const handleMove = (event) => {
-        console.log('h')
         const currentX = event.clientX;
         const currentY = event.clientY;
         const initialX = position.x;
@@ -94,14 +93,14 @@ const MakerControlFunc = (props) => {
             offset: initFunc.offset,
             showBeats: false,    
         }
-        console.log(newFunc)
+        
         setWorkingFunc(newFunc)
         setRefs(initFunc)
         props.changeFunc(newFunc)
     }), [initFunc])
 
     const setRefs = (f) => {
-        console.log(bpmRef, ampRef, omegaRef, funcTypeRef, offsetRef)
+        
         nameRef.current.value = f.name
         bpmRef.current.value = f.bpm
         ampRef.current.value = f.amp
@@ -124,7 +123,7 @@ const MakerControlFunc = (props) => {
 
   
     const handleFileInput = (e) => {
-        console.log(e)
+        
         const audioCtx = audioCtxRef.current
         var files = e.target.files
         var reader = new FileReader()
@@ -144,12 +143,12 @@ const MakerControlFunc = (props) => {
         var ch1 = buff.getChannelData(0)
 
         var data = []
-        //console.log(duration*hz, ch1.length)
+        //
         // send 10 seconds
         for (let i=0; i<hz*100; i++){
             data.push(ch1[i])
         }
-        console.log(hz)
+        
         sendAudioData(data, 22050)
     }
 
@@ -161,13 +160,13 @@ const MakerControlFunc = (props) => {
         }).then(resp => {
             const data = JSON.parse(resp.data.fitted)
             data.name = nameRef.current.value
-            console.log(data)
+            
             setInitFunc(data)
         })
     }
 
     useEffect(() => {
-        console.log('here')
+        
         if (!isMakingGraph) return
         audioCtxRef.current = new AudioContext()
         mp3Ref.current.addEventListener("input", handleFileInput)
@@ -175,9 +174,9 @@ const MakerControlFunc = (props) => {
 
 
     const handleEditSave = () => {
-        console.log('// save //')
-        console.log(funcs)
-        console.log(workingFunc)
+        
+        
+        
         const workingName = workingFunc.name
 
         const doesExist = (() => {
@@ -205,7 +204,6 @@ const MakerControlFunc = (props) => {
             setFuncs(newFuncs)
             setWorkingFunc(initWorkingFunc)
         } else {
-            props.addGraph(workingFunc)
             setFuncs([...funcs, workingFunc])
             setWorkingFunc(initWorkingFunc)
         }
@@ -222,20 +220,20 @@ const MakerControlFunc = (props) => {
         const toShow = funcs.filter(f => {
             return f.name == name
         })
-        console.log(toShow)
-        //console.log('// makercontrolfunc, handleSelectGraph //')
-        //console.log(graphs)
-        //console.log(toShow)
-        props.graphToShow(toShow[0])
+        
+        //
+        //
+        //
+        props.changeFunc(toShow[0])
     }
 
    
 
     const handleAmpChange = (e) => {
-        console.log('ampChange!')
+        
         const amp = e.target.value
         ampRef.current.value = amp 
-        console.log(amp)
+        
         setWorkingFunc({...workingFunc, amp:amp})
     }
 
@@ -284,7 +282,7 @@ const MakerControlFunc = (props) => {
             return f.name == name
         })[0]
         setIsMakingGraph(true)
-        console.log(toEdit)
+        
         setInitFunc(toEdit)
     }
 
@@ -295,10 +293,10 @@ const MakerControlFunc = (props) => {
     // export stuff
     useEffect((()=> {
         if (!isExportMode){
-            console.log('nah')
+            
             return
         } 
-        console.log('here')
+        
         fpsRef.current.value = exportFps
         durationRef.current.value = exportDuration
         exportRef.current.value = parser(exportFps, exportDuration, exportFunc)
@@ -344,6 +342,7 @@ const MakerControlFunc = (props) => {
                 right: -position.x
             }}
             >
+                  <p style={{color: 'white', cursor: 'pointer'}}>Func</p>
                   <img 
                     style={{paddingTop: 5, paddingRight: 5}}
                     className='max' 
@@ -355,7 +354,7 @@ const MakerControlFunc = (props) => {
             </div>
         )
     } else return (
-                <div onMouseDown={handleMove} 
+                <div 
                 className="MakerControlFunc-Container background"
                 style={{
                     top: position.y,
@@ -373,7 +372,11 @@ const MakerControlFunc = (props) => {
                         }   else if (!isMakingGraph && funcs && !isExportMode) {
                             return (
                                 <>
-                                    <div className='tool-header header-font med'>
+                                    <div 
+                                    className='tool-header header-font med' 
+                                    onMouseDown={handleMove}
+                                    style={{cursor: 'pointer'}}
+                                     >
                                         <p style={{paddingRight: 90, paddingLeft: 5}}>All Functions</p>
                                         <img 
                                         style={{paddingTop: 5, paddingRight: 5}}
@@ -410,7 +413,11 @@ const MakerControlFunc = (props) => {
                         } else if (!isMakingGraph && isExportMode){
                             return (
                                 <> 
-                                <div className='tool-header header-font med'>
+                                <div 
+                                className='tool-header header-font med'
+                                onMouseDown={handleMove} 
+                                style={{cursor: 'pointer'}}
+                                >
                                     <p style={{paddingRight: 90, paddingLeft: 5}}>Export</p>
                                     <img 
                                     style={{paddingTop: 5, paddingRight: 5}}
@@ -442,7 +449,11 @@ const MakerControlFunc = (props) => {
                         } else {
                             return (
                                 <> 
-                                    <div className='tool-header header-font med'>
+                                    <div 
+                                    className='tool-header header-font med' 
+                                    onMouseDown={handleMove} 
+                                    style={{cursor: 'pointer'}}
+                                    >
                                         <p style={{paddingRight: 90, paddingLeft: 5}}>Function Creator</p>
                                         <img 
                                         style={{paddingTop: 5, paddingRight: 5}}

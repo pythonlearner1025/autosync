@@ -26,6 +26,10 @@ const nullFunc = {
     false 
 }
 
+const labelColor = 'rgb(150, 150, 150)'
+const curveColor = 'rgb(46, 196, 255)'
+const beatsColor = 'rgb(22, 255, 100)'
+
 // scaling & zooming: https://github.com/OneLoneCoder/Javidx9/blob/master/ConsoleGameEngine/SmallerProjects/OneLoneCoder_PanAndZoom.cpp
 const MakerCanvas = (props) => {
     const [linspace, setLinspace] = useState(0.003)
@@ -59,14 +63,14 @@ const MakerCanvas = (props) => {
     useEffect((()=>{
         // init points
         if (props.funcToShow && !eqfunc(props.funcToShow, nullFunc)) {
-            console.log('loaded', props.funcToShow)
+            
             const t1 = 0
             const t2 = c2w(cDims.width,0).x 
             const newPoints = []
             for (let i=t1; i<t2+linspace; i+=linspace){
                 newPoints.push(new Point(i, sin(i, props.funcToShow)))
             }
-            console.log(newPoints.length)
+            
             setPoints(newPoints)
         }
        setMaxX(c2w(cDims.width,0).x)
@@ -116,8 +120,10 @@ const MakerCanvas = (props) => {
         setCtx(ctx)
         setCDims({width: canvas.width, height: canvas.height})
         setMaxX(c2w(canvas.width,0).x)
-        setAxis(new Axis())
-        console.log(canvas)
+        
+        const conv = c2w(canvas.width/2, canvas.height/2)
+        setAxis(new Axis(conv.x, conv.y))
+        
 
         // Clear the canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -143,15 +149,19 @@ const MakerCanvas = (props) => {
     
     const drawBeats = () => {
         if (!funcToShow  || !funcToShow.showBeats) return
+        ctx.save()
+        ctx.strokeStyle=beatsColor
+        const amp = funcToShow.amp*2
         funcToShow.beats.map(beat => {
-            const p1 = w2c(beat, 10) 
-            const p2 = w2c(beat, -10)
+            const p1 = w2c(beat, amp)
+            const p2 = w2c(beat, -amp)
             ctx.beginPath()
             ctx.moveTo(p1.cx, p1.cy)
             ctx.lineTo(p2.cx, p2.cy)
             ctx.stroke()
             ctx.closePath()
         })
+        ctx.restore()
     }
 
 
@@ -185,7 +195,7 @@ const MakerCanvas = (props) => {
         for (let i=t1.x+linspace; i<newWorldMaxX+linspace; i+=linspace) {
             newPoints.push(new Point(i, sin(i)))
         }
-        console.log('added p',newPoints.length)
+        
         setPoints([...points, ...newPoints])
     }
     // TODO:
@@ -210,18 +220,19 @@ const MakerCanvas = (props) => {
 
     const bcurve = (tension) => {
         if (points.length == 0) return
-        console.log(points.length)
+        
 
         const t1 = c2w(0,0).x
         const t2 = c2w(cDims.width,0).x
         const i1 = Math.floor(t1/linspace) <= 0 ? 0 : Math.floor(t1/linspace)-1
         const i2 = Math.ceil(t2/linspace)+1 > points.length-1 ? points.length-1 : Math.ceil(t2/linspace)+1
-        console.log('comp',i2-i1)
+        
 
         const points0 = w2c(points[i1].x, points[i1].y)
         ctx.beginPath();
+        ctx.strokeStyle = curveColor
         ctx.moveTo(points0.cx, points0.cy);
-        //console.log(points0.cx, points0.cy)
+        //
         var t = (tension != null) ? tension : 1;
         for (var i = i1; i < i2; i++) {
             var p0 = (i > i1) ? w2c(points[i-1].x, points[i-1].y) : w2c(points[i].x, points[i].y);
@@ -246,13 +257,13 @@ const MakerCanvas = (props) => {
         const xlabels = labels2render.xlabels
         const ylabels = labels2render.ylabels
         ctx.save()
-        ctx.fillStyle = 'black'
+        ctx.fillStyle = labelColor 
+        ctx.strokeStyle = labelColor
         const f = scale > 3.0 ? 10 : Math.floor(scale/3.0*10)
         const b = scale > 3.0 ? 3 : Math.floor(scale/3.0*3)
         ctx.font = `${f}px serif`
         xlabels.map(p => {
             const conv = w2c(p.x, p.y)
-            ctx.fillStyle = 'black'
             ctx.fillText(`${p.x}`,conv.cx+b, conv.cy-b)
             ctx.beginPath()
             ctx.moveTo(conv.cx, conv.cy-b)
@@ -262,7 +273,6 @@ const MakerCanvas = (props) => {
         })
         ylabels.map(p => {
             const conv = w2c(p.x, p.y)
-            ctx.fillStyle = 'black'
             if (p.y != 0) {
                 ctx.fillText(`${p.y}`, conv.cx+b+2, conv.cy+b)
                 ctx.beginPath()
@@ -278,7 +288,7 @@ const MakerCanvas = (props) => {
     const drawAxis = () => {
         ctx.save()
         ctx.beginPath()
-        ctx.strokeStyle = 'black'
+        ctx.strokeStyle = labelColor
         const conv = w2c(axis.x, axis.y)
         ctx.moveTo(0, conv.cy)
         ctx.lineTo(cDims.width, conv.cy)
@@ -346,16 +356,18 @@ const MakerCanvas = (props) => {
     }
 
     const w2c = (x,y,s=scale) => {
+        const w = canvasRef.current.width
         const h = canvasRef.current.height
-        const cx = (x-d.x)*u2px*s
-        const cy = h/2-((y-d.y)*u2px*s)
+        const cx = w/2 + (x-d.x)*u2px*s
+        const cy = h/2 -((y-d.y)*u2px*s)
         return {cx: cx, cy: cy}
     }
 
     const c2w = (cx,cy,s=scale) => {
+        const w = canvasRef.current.width
         const h = canvasRef.current.height
-        const x = cx / (u2px*s) + d.x
-        const y = -(cy - h/2 )/(u2px*s)+d.y
+        const x = ((cx-w/2) / (u2px*s)) + d.x
+        const y = -(cy-h/2)/(u2px*s)+d.y
         return {x: x, y: y}
     }
 
@@ -385,7 +397,7 @@ const MakerCanvas = (props) => {
         */
         // add points before change
         const newdx = d.x + dx
-        console.log('wheel')
+        
         if (newdx < d.x) {
             const newMaxX = cDims.width / (u2px*s) + newdx
             if (newMaxX >= maxX) {
@@ -409,7 +421,7 @@ const MakerCanvas = (props) => {
     document.addEventListener('keydown', handleKeyDown)
 
     return (
-        <div ref={containerRef} className="MakerCanvas-Container blue">
+        <div ref={containerRef} className="MakerCanvas-Container canvas">
             <canvas 
             ref={canvasRef}
             onMouseDown={handleOnMouseDown} 
