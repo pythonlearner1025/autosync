@@ -21,9 +21,12 @@ const initWorkingFunc ={
     amp: undefined,
     funcType: undefined, 
     omega: undefined,
-    offset: undefined,
+    offset_x: undefined,
+    offset_y: undefined,
     showBeats: false,
 } 
+
+const dec = (x) => {return parseFloat(x).toFixed(4)}
 
 const MakerControlFunc = (props) => {
     const [funcs, setFuncs] = useState([])
@@ -44,7 +47,9 @@ const MakerControlFunc = (props) => {
     const mp3Ref = useRef(null)
     const funcTypeRef = useRef(null)
     const omegaRef = useRef(null)
-    const offsetRef = useRef(null)
+    const offsetXRef = useRef(null)
+    const offsetYRef = useRef(null)
+    
     const audioCtxRef = useRef(null)
     const nameRef = useRef(null)
     const exportRef = useRef(null)
@@ -90,7 +95,8 @@ const MakerControlFunc = (props) => {
             funcType: initFunc.funcType, 
             omega: initFunc.omega,
             beats: initFunc.beats,
-            offset: initFunc.offset,
+            offset_x: initFunc.offset_x,
+            offset_y: initFunc.offset_y,
             showBeats: false,    
         }
         
@@ -106,7 +112,9 @@ const MakerControlFunc = (props) => {
         ampRef.current.value = f.amp
         omegaRef.current.value = f.omega
         funcTypeRef.current.value = f.funcType
-        offsetRef.current.value = f.offset
+        offsetXRef.current.value = f.offset_x
+        offsetYRef.current.value = f.offset_y
+        
     }
 
     useEffect((()=> {
@@ -118,7 +126,8 @@ const MakerControlFunc = (props) => {
             workingFunc.omega,
             workingFunc.funcType,
             workingFunc.showBeats,
-            workingFunc.offset
+            workingFunc.offset_x,
+            workingFunc.offset_y
     ])
 
   
@@ -160,6 +169,8 @@ const MakerControlFunc = (props) => {
         }).then(resp => {
             const data = JSON.parse(resp.data.fitted)
             data.name = nameRef.current.value
+            data.offset_x = 0
+            data.offset_y = 0
             
             setInitFunc(data)
         })
@@ -230,10 +241,8 @@ const MakerControlFunc = (props) => {
    
 
     const handleAmpChange = (e) => {
-        
         const amp = e.target.value
         ampRef.current.value = amp 
-        
         setWorkingFunc({...workingFunc, amp:amp})
     }
 
@@ -249,10 +258,16 @@ const MakerControlFunc = (props) => {
         setWorkingFunc({...workingFunc, funcType:funcType})
     }
 
-    const handleOffsetChange = (e) => {
+    const handleOffsetXChange = (e) => {
         const offset = e.target.value
-        offsetRef.current.value = offset
-        setWorkingFunc({...workingFunc, offset:offset})
+        offsetXRef.current.value = offset
+        setWorkingFunc({...workingFunc, offset_x:offset})
+    }
+
+    const handleOffsetYChange = (e) => {
+        const offset = e.target.value
+        offsetYRef.current.value = offset
+        setWorkingFunc({...workingFunc, offset_y:offset})
     }
 
     const handleNameChange = (e) => {
@@ -274,6 +289,7 @@ const MakerControlFunc = (props) => {
     }
 
     const handleShowBeats = () => {
+        if (!workingFunc.beats) return
         setWorkingFunc({...workingFunc, showBeats: !workingFunc.showBeats})
     }
     
@@ -332,6 +348,8 @@ const MakerControlFunc = (props) => {
         durationRef.current.value = s 
         setExportDuration(s)
     }
+
+
     if (minimize) {
         return (
             <div 
@@ -488,19 +506,30 @@ const MakerControlFunc = (props) => {
                                             <label className="label">amp</label>
                                             <input ref={ampRef} name="amp" className="input" type="number" 
                                             onChange={handleAmpChange}
+                                            step='0.1'
                                             ></input> 
                                         </div>
                                         <div className="input-container control-font">
                                             <label className="label">period</label>
                                             <input ref={omegaRef} name="omega" className="input" type="number" 
                                             onChange={handleOmegaChange}
+                                            step='0.1'
                                             ></input> 
                                         </div>
                                         
                                         <div className="input-container control-font">
-                                            <label className="label">offset</label>
-                                            <input ref={offsetRef} name="offset" className="input" type="number" 
-                                            onChange={handleOffsetChange}
+                                            <label className="label">offset_x</label>
+                                            <input ref={offsetXRef} name="offset" className="input" type="number" 
+                                            onChange={handleOffsetXChange}
+                                            step='0.1'
+                                            ></input> 
+                                        </div>
+
+                                        <div className="input-container control-font">
+                                            <label className="label">offset_y</label>
+                                            <input ref={offsetYRef} name="offset" className="input" type="number" 
+                                            onChange={handleOffsetYChange}
+                                            step='0.1'
                                             ></input> 
                                         </div>
                                     </div>
