@@ -12,8 +12,11 @@ const nullFunc = {
     fps
     : 
     undefined,
-    offset
+    offset_x
     : 
+    undefined,
+    offset_y
+    :
     undefined,
     omega
     : 
@@ -78,6 +81,7 @@ const MakerCanvas = (props) => {
     }), [props.funcToShow])
 
     useEffect((()=>{
+        console.log(funcToShow)
         draw()
     }), [funcToShow])
     
@@ -91,13 +95,13 @@ const MakerCanvas = (props) => {
     const sin = (t, f=funcToShow) => {
         switch (f.funcType) {
             case ('saw'): {
-                return f.amp * (Math.cos((t-f.offset)*f.omega))**100 
+                return f.amp * (Math.cos((t-f.offset_x)*f.omega))**100 + parseFloat(f.offset_y)
             }
             case ('sin'): {
-                return f.amp * Math.sin((t-f.offset)*f.omega)
+                return f.amp * Math.sin((t-f.offset_x)*f.omega) + parseFloat(f.offset_y)
             }
         }
-        return f.amp * Math.sin((t-f.offset)*f.omega)
+        return f.amp * Math.sin((t-f.offset_x)*f.omega) + parseFloat(f.offset_y)
     }
 
     /*
@@ -151,10 +155,11 @@ const MakerCanvas = (props) => {
         if (!funcToShow  || !funcToShow.showBeats) return
         ctx.save()
         ctx.strokeStyle=beatsColor
+        const base = parseFloat(funcToShow.offset_y)
         const amp = funcToShow.amp*2
         funcToShow.beats.map(beat => {
-            const p1 = w2c(beat, amp)
-            const p2 = w2c(beat, -amp)
+            const p1 = w2c(beat, base+amp)
+            const p2 = w2c(beat, base-amp)
             ctx.beginPath()
             ctx.moveTo(p1.cx, p1.cy)
             ctx.lineTo(p2.cx, p2.cy)
@@ -414,7 +419,7 @@ const MakerCanvas = (props) => {
     // utils
 
     const eqfunc = (a,b) => {
-        if (a.amp == b.amp && a.bpm == b.bpm && a.fps == b.fps && a.offset == b.offset && a.omega == b.omega && a.phase == b.phase && a.showBeats == b.showBeats) return true
+        if (a.amp == b.amp && a.bpm == b.bpm && a.fps == b.fps && a.offset_x == b.offset_x && a.omega == b.omega && a.phase == b.phase && a.showBeats == b.showBeats) return true
         else return false
     }
 
