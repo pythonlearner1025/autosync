@@ -4,6 +4,7 @@ import Graph from "./Graph"
 import "../comps.css"
 import min from "../../assets/download.svg"
 import parser from "../../funcs/parser"
+import toString from "../../funcs/toString"
 
 /*
  TODO:
@@ -16,7 +17,6 @@ import parser from "../../funcs/parser"
 */
 
 const initWorkingFunc ={
-    fps: undefined,
     bpm: undefined,
     amp: undefined,
     funcType: undefined, 
@@ -26,7 +26,7 @@ const initWorkingFunc ={
     showBeats: false,
 } 
 
-const dec = (x) => {return parseFloat(x).toFixed(4)}
+
 
 const MakerControlFunc = (props) => {
     const [funcs, setFuncs] = useState([])
@@ -49,6 +49,7 @@ const MakerControlFunc = (props) => {
     const omegaRef = useRef(null)
     const offsetXRef = useRef(null)
     const offsetYRef = useRef(null)
+    const exportFuncRef = useRef(null)
     
     const audioCtxRef = useRef(null)
     const nameRef = useRef(null)
@@ -122,7 +123,6 @@ const MakerControlFunc = (props) => {
     }), [
             workingFunc.amp, 
             workingFunc.bpm,
-            workingFunc.fps,
             workingFunc.omega,
             workingFunc.funcType,
             workingFunc.showBeats,
@@ -238,7 +238,25 @@ const MakerControlFunc = (props) => {
         props.changeFunc(toShow[0])
     }
 
-   
+   // need more robust check
+   const noMusic = (func) => {
+       return !func.bpm  
+   }
+
+   const initBasicFunc = (funcType) => {
+       ampRef.current.value = ampRef.current.value==''?1:ampRef.current.value
+       omegaRef.current.value = omegaRef.current.value==''?1:omegaRef.current.value
+       offsetXRef.current.value = offsetXRef.current.value==''?0:offsetXRef.current.value
+       offsetYRef.current.value = offsetYRef.current.value==''?0:offsetYRef.current.value
+       setWorkingFunc({
+        ...workingFunc, 
+        amp: parseFloat(ampRef.current.value),
+        omega: parseFloat(omegaRef.current.value),
+        offset_x: parseFloat(offsetXRef.current.value),
+        offset_y: parseFloat(offsetYRef.current.value),
+        funcType: funcType
+       })
+   }
 
     const handleAmpChange = (e) => {
         const amp = e.target.value
@@ -255,6 +273,10 @@ const MakerControlFunc = (props) => {
     const handleFuncTypeChange = (e) => {
         const funcType = e.target.value
         funcTypeRef.current.value = funcType
+        if (noMusic(workingFunc)) {
+            initBasicFunc(funcType)
+            return
+        }
         setWorkingFunc({...workingFunc, funcType:funcType})
     }
 
@@ -316,6 +338,7 @@ const MakerControlFunc = (props) => {
         fpsRef.current.value = exportFps
         durationRef.current.value = exportDuration
         exportRef.current.value = parser(exportFps, exportDuration, exportFunc)
+        exportFuncRef.current.value = toString(exportFunc)
     }), [exportFps, exportDuration])
 
     const handleExport = (name) => {
@@ -347,6 +370,11 @@ const MakerControlFunc = (props) => {
         const s = e.target.value
         durationRef.current.value = s 
         setExportDuration(s)
+    }
+
+    const handleExportFuncAreaClick = (e) => {
+        e.target.select()
+        document.execCommand('copy')
     }
 
 
@@ -455,8 +483,17 @@ const MakerControlFunc = (props) => {
                                         <label className="label">duration(s):</label>
                                         <input ref={durationRef} name="name" className="input" onChange={handleDurationChange} type="number"></input> 
                                     </div>
+                                    <div className="label-container control-font">
+                                        <label className="label info-text">frames:</label>
+                                    </div>
                                     <div className="input-container">
                                         <textarea ref={exportRef} className="export-area" onClick={handleExportAreaClick}></textarea>
+                                    </div>
+                                    <div className="label-container control-font">
+                                        <label className="label info-text">function:</label>
+                                    </div>
+                                    <div className="input-container control-font">
+                                        <textarea ref={exportFuncRef} className="export-func-area" onClick={handleExportFuncAreaClick}></textarea> 
                                     </div>
                                     <div className="input-container">
                                         <button className="button high" onClick={handleExportExit}>exit</button>
