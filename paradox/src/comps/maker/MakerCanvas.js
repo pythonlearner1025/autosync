@@ -81,7 +81,6 @@ const MakerCanvas = (props) => {
     }), [props.funcToShow])
 
     useEffect((()=>{
-        console.log(funcToShow)
         draw()
     }), [funcToShow])
     
