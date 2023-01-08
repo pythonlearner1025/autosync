@@ -154,7 +154,8 @@ const MakerControlFunc = (props) => {
         var data = []
         //
         // send 10 seconds
-        for (let i=0; i<hz*100; i++){
+        console.time('api')
+        for (let i=0; i<ch1.length; i++){
             data.push(ch1[i])
         }
         
@@ -164,9 +165,10 @@ const MakerControlFunc = (props) => {
 
     const sendAudioData = (ch1, sr) => {
         axios.post("http://localhost:8000/api/audio-data", {
-            audioData: ch1,
+            audioData: JSON.stringify(ch1),
             sr: sr
         }).then(resp => {
+            console.timeEnd('api')
             const data = JSON.parse(resp.data.fitted)
             data.name = nameRef.current.value
             data.offset_x = 0

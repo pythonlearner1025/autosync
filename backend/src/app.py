@@ -16,6 +16,9 @@ def hello():
 @cross_origin()
 def receive_audio_data():
   audio_data = request.json['audioData']
+  print(type(audio_data))
+  print(type(audio_data[0]))
+  audio_data = json.loads(audio_data)
   sr = request.json['sr']
   y,t,bpm,beats = process_data(np.array(audio_data), int(sr))
 
@@ -23,7 +26,6 @@ def receive_audio_data():
   fitted = fit_sin(t, y)
   fitted['bpm'] = bpm
   fitted['beats'] = beats.tolist()
-  print(beats)
 
   #print(audio_data)
   return {
